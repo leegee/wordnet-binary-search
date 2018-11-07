@@ -17,7 +17,7 @@ export namespace Wordnet {
          * @see https://wordnet.princeton.edu/documentation/wninput5wn
          */
         static _pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
-            n: { // The pointer_symbol s for nouns:
+            n: { // The pointer_symbols for nouns:
                 antonym: '!',
                 hypernym: '@',
                 instanceHypernym: '@i',
@@ -38,7 +38,7 @@ export namespace Wordnet {
                 domainofSynsetUsage: ';u',
                 memberofThisDomainUsage: '-u'
             },
-            v: { // The pointer_symbol s for verbs:
+            v: { // The pointer_symbols for verbs:
                 antonym: '!',
                 hypernym: '@',
                 hypnym: '~',
@@ -51,7 +51,7 @@ export namespace Wordnet {
                 domainofSynsetRegion: ';r',
                 domainofSynsetUsage: ';u'
             },
-            r: { // The pointer_symbol s for adjectives:
+            r: { // The pointer_symbols for adjectives:
                 antonym: '!',
                 similarTo: '&',
                 participleOfVerb: '<',
@@ -62,7 +62,7 @@ export namespace Wordnet {
                 domainofSynsetRegion: ';r',
                 domainofSynsetUsage: ';u'
             },
-            a: {// The pointer_symbol s for adverbs are:
+            a: {// The pointer_symbols for adverbs are:
                 antonym: '!',
                 derivedFromAdjective: '\\',
                 domainofSynsetTopic: ';c',
