@@ -1,7 +1,5 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { Console } from 'console';
-import * as devnull from 'dev-null';
 
 import * as chai from 'chai';
 import * as  chaiAsPromised from 'chai-as-promised';
@@ -10,12 +8,7 @@ const expect = chai.expect;
 
 import { Wordnet } from './wordnet';
 
-Wordnet.Wordnet.logger = new Console({
-    // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30339
-    // @ts-ignore
-    stderr: devnull(),
-    stdout: devnull() // process.stdout
-});
+Wordnet.Wordnet.dataDir = path.resolve('assets/wordnet');
 
 describe('Wordnet', () => {
     it('inits data file paths', () => {

@@ -1,5 +1,6 @@
-import * as path from 'path';
 import * as fs from 'fs';
+import { Console } from 'console';
+import * as devnull from 'dev-null';
 
 export namespace Wordnet {
     const INPUT_BUFFER_READ_LINE_SIZE = 256;
@@ -309,24 +310,35 @@ export namespace Wordnet {
 
     // tslint:disable-next-line:no-shadowed-variable
     export class Wordnet {
-        static indexFiles: { [key: string]: IndexFile } = {
-            r: new IndexFile('adj', 'r', path.resolve('assets/wordnet/index.adj')),
-            a: new IndexFile('adv', 'a', path.resolve('assets/wordnet/index.adv')),
-            n: new IndexFile('noun', 'n', path.resolve('assets/wordnet/index.noun')),
-            v: new IndexFile('verb', 'v', path.resolve('assets/wordnet/index.verb'))
+        static dataDir: string;
+
+        static get indexFiles(): { [key: string]: IndexFile } {
+            return {
+                r: new IndexFile('adj', 'r', Wordnet.dataDir + '/index.adj'),
+                a: new IndexFile('adv', 'a', Wordnet.dataDir + '/index.adv'),
+                n: new IndexFile('noun', 'n', Wordnet.dataDir + '/index.noun'),
+                v: new IndexFile('verb', 'v', Wordnet.dataDir + '/index.verb')
+            }
         };
 
-        static dataFiles: { [key: string]: DataFile } = {
-            r: new DataFile('adj', 'r', path.resolve('assets/wordnet/data.adj')),
-            a: new DataFile('adv', 'a', path.resolve('assets/wordnet/data.adv')),
-            n: new DataFile('noun', 'n', path.resolve('assets/wordnet/data.noun')),
-            v: new DataFile('verb', 'v', path.resolve('assets/wordnet/data.verb'))
+        static get dataFiles(): { [key: string]: DataFile } {
+            return {
+                r: new DataFile('adj', 'r', Wordnet.dataDir + '/data.adj'),
+                a: new DataFile('adv', 'a', Wordnet.dataDir + '/data.adv'),
+                n: new DataFile('noun', 'n', Wordnet.dataDir + '/data.noun'),
+                v: new DataFile('verb', 'v', Wordnet.dataDir + '/data.verb')
+            }
         };
 
-        static _logger: any = console;
+        static _logger = new Console({
+            // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30339
+            // @ts-ignore
+            stderr: devnull(),
+            stdout: devnull()
+        });
 
-        static set logger(_logger) {
-            this._logger = _logger;
+        static set logger(userSuppliedLogger) {
+            this._logger = userSuppliedLogger;
         }
 
         static get logger() {
