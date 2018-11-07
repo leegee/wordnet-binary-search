@@ -24,7 +24,7 @@ describe('Wordnet', () => {
         let wordUnderTest;
 
         before(() => {
-            wordUnderTest = Wordnet.Wordnet.findWord('import', 'v');
+            wordUnderTest = Wordnet.Wordnet.getIndexEntry('import', 'v');
         });
 
         it('finds verb "import"', () => {
@@ -82,8 +82,8 @@ describe('Wordnet', () => {
     });
 
     it('finds the opposite of verb "import"', () => {
-        const inputWord = Wordnet.Wordnet.findWord('import', 'v');
-        const antonyms = inputWord.antonym;
+        const inputWord = Wordnet.Wordnet.getIndexEntry('import', 'v');
+        const antonyms = inputWord['antonym'];
         expect(antonyms).to.be.an.instanceof(Array);
         expect(antonyms).to.have.length(2);
         antonyms.forEach(word => {
@@ -93,7 +93,7 @@ describe('Wordnet', () => {
     });
 
     it('finds all forms of  "like"', () => {
-        const indexEntries = Wordnet.Wordnet.findWord('excuse');
+        const indexEntries = Wordnet.Wordnet.getIndexEntries('excuse');
         expect(indexEntries).to.be.an.instanceof(Array);
         expect(indexEntries).to.have.length(1);
         indexEntries.forEach(indexEntry => {

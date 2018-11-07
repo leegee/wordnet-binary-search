@@ -8,29 +8,67 @@ export namespace Wordnet {
     /**
      * Entries in the Wordnet `index.*` files, whose format in 3.1 is as follows:
      *
-     *  lemma  pos  synset_cnt  p_cnt  [ptr_symbol...]  sense_cnt  tagsense_cnt   synset_offset  [synset_offset...]
+     *  `lemma  pos  synset_cnt  p_cnt  [ptr_symbol...]  sense_cnt  tagsense_cnt   synset_offset  [synset_offset...]`
      */
     export class IndexEntry {
-        static _pointerMapEngToSymbol: { [key: string]: string } = {
-            antonym: '!',
-            hypernym: '@',
-            instanceHypernym: '@i',
-            hypnym: '~',
-            instanceHyponym: '~i',
-            memberHolonym: '#m',
-            substanceHolonym: '#s',
-            partHolonym: '#p',
-            memberMeronym: '%m',
-            substanceMeronym: '%s',
-            partMeronym: '%p',
-            attribute: '=',
-            derivationallyRelatedForm: '+',
-            domainofSynsetTopic: ';c',
-            memberofThisDomainTopic: '-c',
-            domainofSynsetRegion: ';r',
-            memberofThisDomainRegion: '-r',
-            domainofSynsetUsage: ';u',
-            memberofThisDomainUsage: '-u'
+        /**
+         * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
+         * Second-level is keyed by phrase taken from then `wninput(WN5)` document.
+         * @see https://wordnet.princeton.edu/documentation/wninput5wn
+         */
+        static _pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
+            n: { // The pointer_symbol s for nouns:
+                antonym: '!',
+                hypernym: '@',
+                instanceHypernym: '@i',
+                hypnym: '~',
+                instanceHyponym: '~i',
+                memberHolonym: '#m',
+                substanceHolonym: '#s',
+                partHolonym: '#p',
+                memberMeronym: '%m',
+                substanceMeronym: '%s',
+                partMeronym: '%p',
+                attribute: '=',
+                derivationallyRelatedForm: '+',
+                domainofSynsetTopic: ';c',
+                memberofThisDomainTopic: '-c',
+                domainofSynsetRegion: ';r',
+                memberofThisDomainRegion: '-r',
+                domainofSynsetUsage: ';u',
+                memberofThisDomainUsage: '-u'
+            },
+            v: { // The pointer_symbol s for verbs:
+                antonym: '!',
+                hypernym: '@',
+                hypnym: '~',
+                entailment: '*',
+                cause: '>',
+                alsoSee: '^',
+                verbGroup: '$',
+                derivationallyRelatedForm: '+',
+                domainofSynsetTopic: ';c',
+                domainofSynsetRegion: ';r',
+                domainofSynsetUsage: ';u'
+            },
+            r: { // The pointer_symbol s for adjectives:
+                antonym: '!',
+                similarTo: '&',
+                participleOfVerb: '<',
+                pertainym: '\\',
+                attribute: '=',
+                alsoSee: '^',
+                domainofSynsetTopic: ';c',
+                domainofSynsetRegion: ';r',
+                domainofSynsetUsage: ';u'
+            },
+            a: {// The pointer_symbol s for adverbs are:
+                antonym: '!',
+                derivedFromAdjective: '\\',
+                domainofSynsetTopic: ';c',
+                domainofSynsetRegion: ';r',
+                domainofSynsetUsage: ';u'
+            }
         };
 
         word: string; // lemma
@@ -55,14 +93,14 @@ export namespace Wordnet {
             for (let i = 0; i < p_cnt; i++) {
                 this.ptrSymbols.push(parts.shift());
             }
-            parts.shift();  // sense_cnt
+            parts.shift();  // sense_cnt unused, as senses are at EOL
             this.tagsenseCnt = Number(parts.shift());
             this.synsetOffsets = parts.map(i => Number(i));
 
-            Object.keys(IndexEntry._pointerMapEngToSymbol).forEach(englishKey => {
+            Object.keys(IndexEntry._pointerMapEngToSymbol[this.pos]).forEach(englishKey => {
                 Object.defineProperty(this, englishKey, {
                     get: () => this.getPointer(
-                        IndexEntry._pointerMapEngToSymbol[englishKey]
+                        IndexEntry._pointerMapEngToSymbol[this.pos][englishKey]
                     )
                 });
             });
@@ -78,7 +116,7 @@ export namespace Wordnet {
                 this.synsetOffsets.forEach(synsetOffset => {
                     Wordnet.logger.debug('Try synsetOffset', synsetOffset, 'with pos', this.pos);
                     this._wordnetSenses.push(
-                        Wordnet.dataFiles[this.pos].getSense(synsetOffset)
+                        Wordnet.dataFiles[this.pos]._getSense(synsetOffset)
                     );
                 });
             }
@@ -86,7 +124,7 @@ export namespace Wordnet {
         }
 
         /**
-         * Dereferences the entry's semantic pointers from the entry's sense definitions, 
+         * Dereferences the entry's semantic pointers from the entry's sense definitions,
          * as identified by their `wininput(5WN)` pointer symbol.
          * @param ptrSymbol Pointer symbol.
          * @returns Sense[]
@@ -126,7 +164,7 @@ export namespace Wordnet {
             this.target = sourceTarget.substr(2, 2);
         }
 
-        static fromParts(pCnt: number, parts: string[]): [Pointer[], string[]] {
+        static _fromLineFields(pCnt: number, parts: string[]): [Pointer[], string[]] {
             const ptrs: Pointer[] = [];
             for (let i = 1; i <= pCnt; i++) {
                 ptrs.push(
@@ -152,11 +190,11 @@ export namespace Wordnet {
         lexId: string; // 1-digit hex
         pCnt: number; // 3-digit decimal
         ptrs: Pointer[];
-        franes: string; // TODO
+        franes: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
         gloss: string;
 
         static fromPointer(ptr: Pointer): Sense {
-            return Wordnet.dataFiles[ptr.pos].getSense(ptr.synsetOffset);
+            return Wordnet.dataFiles[ptr.pos]._getSense(ptr.synsetOffset);
         }
 
         static fromLine(line: string): Sense {
@@ -174,7 +212,7 @@ export namespace Wordnet {
             self.word = parts.shift();
             self.lexId = parts.shift();
             self.pCnt = Number(parts.shift());
-            [self.ptrs, parts] = Pointer.fromParts(self.pCnt, parts);
+            [self.ptrs, parts] = Pointer._fromLineFields(self.pCnt, parts);
             return self;
         }
     }
@@ -199,12 +237,13 @@ export namespace Wordnet {
         }
     }
 
+
     export class DataFile extends SourceFile {
         /**
-         * Returns a Wordnet sense object representing  the given line.
+         * Returns a Wordnet sense object representing the line at `synsetOffest`.
          * @param synsetOffset The line offset in the `data.${this.type}` file.
          */
-        getSense(synsetOffset: number): Sense {
+        _getSense(synsetOffset: number): Sense {
             Wordnet.logger.debug('getSense for pos [%s] synset [%d]', this.type, synsetOffset);
             const line = this._getLineBySynsetOffset(synsetOffset);
             Wordnet.logger.debug('Got line: ', line);
@@ -235,12 +274,13 @@ export namespace Wordnet {
 
     export class IndexFile extends SourceFile {
         /**
-        * Returns a `WordnetIndexEntry` object for the supplied string.
+        * Returns a index entry for the supplied word.
         * @param subject Word sought.
+        * @return IndexEntry or `null`
         */
-        findIndexEntry(subject: string) {
+        getEntry(subject: string): IndexEntry | null {
             const stats = fs.fstatSync(this.fd);
-            return this._findIndexEntry(
+            return this._getIndexEntry(
                 subject.toLocaleLowerCase(),
                 Buffer.alloc(INPUT_BUFFER_READ_LINE_SIZE),
                 Math.floor(stats.size / 2),
@@ -255,7 +295,7 @@ export namespace Wordnet {
          * @param pos Current position within the intput file.
          * @param totalLength Total length of the file.
          */
-        _findIndexEntry(
+        _getIndexEntry(
             subject: string,
             inputBuffer: Buffer,
             pos: number,
@@ -272,39 +312,39 @@ export namespace Wordnet {
 
             const comparision = subject.localeCompare(word);
             if (comparision === 0) {
-                // Wordnet.logger.info('FOUND! [%s]');
+                // Wordnet.logger.debug('FOUND WITHIN [%s]');
                 let line = inputBuffer.toString().substring(newlineStartPos);
-                // Wordnet.logger.info('Line [%s]', line);
+                // Wordnet.logger.silly('Line [%s]', line);
                 if (line.indexOf('\n') === -1) {
-                    // Wordnet.logger.log('Read more');
+                    // Wordnet.logger.silly('Read more');
                     fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, pos + newlineStartPos);
-                    // Wordnet.logger.info('Final read [%s]', inputBuffer);
+                    // Wordnet.logger.debug('Final read [%s]', inputBuffer);
                     line = line + inputBuffer.toString();
                 }
                 line = line.substring(0, line.indexOf('\n')).trimRight();
-                // Wordnet.logger.info('\n\nFINAL FOUND LINE [%s] ', line);
+                // Wordnet.logger.debug('\n\nFINAL FOUND LINE [%s] ', line);
                 return new IndexEntry(line);
             }
 
             if (comparision < 0) {
                 totalLength = pos;
                 pos = Math.floor(pos = pos / 2);
-                // Wordnet.logger.debug('<', pos);
+                // Wordnet.logger.silly('<', pos);
             } else {
                 pos = pos + Math.floor((totalLength - pos) / 2);
-                // Wordnet.logger.debug('>', pos, totalLength);
+                // Wordnet.logger.silly('>', pos, totalLength);
             }
 
             if (totalLength - pos <= INPUT_BUFFER_READ_LINE_SIZE) {
-                // return this._findWordInIndex(subject, inputBuffer, totalLength - INPUT_BUFFER_READ_LINE_SIZE, totalLength);
+                // TODO Parse that
                 return null;
             } else if (pos >= totalLength || pos <= 0) {
                 Wordnet.logger.warn('Not found', subject, pos, totalLength);
                 return null;
             }
 
-            // Wordnet.logger.log('recurse ', subject, pos, totalLength);
-            return this._findIndexEntry(subject, inputBuffer, pos, totalLength);
+            // Wordnet.logger.silly('recurse ', subject, pos, totalLength);
+            return this._getIndexEntry(subject, inputBuffer, pos, totalLength);
         }
     }
 
@@ -345,22 +385,30 @@ export namespace Wordnet {
             return Wordnet._logger;
         }
 
-        static findWord(subject: string, filetypeKey?: string) {
-            const types = filetypeKey ? [filetypeKey] : Object.keys(this.indexFiles);
-            const rv = [];
-            types.forEach(type => {
-                const word = this.indexFiles[type].findIndexEntry(subject);
-                if (word !== null) {
-                    rv.push(word);
-                }
-            });
+        /**
+         * Find the index entry for a specified form a word.
+         * 
+         * @param subject The word sought.
+         * @param filetypeKey A form for which to search.
+         * @param IndexEntry[] 
+         * @see IndexFile#getIndexEntry
+         */
+        static getIndexEntry(subject: string, filetypeKey: string): IndexEntry | null {
+            return this.indexFiles[filetypeKey].getEntry(subject);
+        }
 
-            if (filetypeKey) {
-                return rv.length ? rv[0] : null;
-            }
-            return rv;
+        /**
+         * Finds index entries for all forms of a word.
+         * 
+         * @param subject The word sought.
+         */
+        static getIndexEntries(subject: string): IndexEntry[] | null {
+            return Object.keys(this.indexFiles)
+                .filter(type => this.indexFiles.hasOwnProperty(type))
+                .map(type => this.indexFiles[type].getEntry(subject))
+                .filter((word: IndexEntry) => word !== null);
+
         }
 
     }
 }
-
