@@ -107,7 +107,7 @@ describe('Wordnet', () => {
         });
     });
 
-    xit('finds the opposites of all forms of  "excuse"', () => {
+    it('finds the opposites of all forms of  "excuse"', () => {
         Wordnet.Wordnet.getIndexEntries('excuse').forEach(indexEntry => {
             const senses = indexEntry.wordnetSenses;
             senses.forEach( sense => {
