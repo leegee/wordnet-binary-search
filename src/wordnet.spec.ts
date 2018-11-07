@@ -97,27 +97,28 @@ describe('Wordnet', () => {
     });
 
     it('finds the opposite of verb "import"', () => {
-        const inputWord = Wordnet.Wordnet.getIndexEntry('import', 'v');
-        const antonyms = inputWord['antonym'];
-        expect(antonyms).to.be.an.instanceof(Array);
-        expect(antonyms).to.have.length(2);
-        antonyms.forEach(word => {
-            expect(word).to.be.an.instanceof(Wordnet.Sense);
-            expect(word.word).to.equal('export');
+        const indexEntry = Wordnet.Wordnet.getIndexEntry('import', 'v');
+        indexEntry.senses.forEach(sense => {
+            testSense(sense);
         });
     });
 
     it('finds the opposites of all forms of  "import"', () => {
         Wordnet.Wordnet.getIndexEntries('import').forEach(indexEntry => {
             indexEntry.senses.pop();
-            indexEntry.senses.forEach( sense => {
-                const antonym: Wordnet.Sense[] = sense['antonym'];
-                expect(antonym).to.be.an.instanceof(Array);
-                expect(antonym[0]).to.be.an.instanceof(Wordnet.Sense);
-                expect(antonym[0].word).to.be.a('string');
-                expect(antonym[0].word).to.equal('export');
+            indexEntry.senses.forEach(sense => {
+                testSense(sense);
             });
         });
     });
 });
 
+const testSense = (sense) => {
+    const antonym: Wordnet.Sense[] = sense['antonym'];
+    if (antonym !== null) {
+        expect(antonym).to.be.an.instanceof(Array);
+        expect(antonym[0]).to.be.an.instanceof(Wordnet.Sense);
+        expect(antonym[0].word).to.be.a('string');
+        expect(antonym[0].word).to.equal('export');
+    }
+};

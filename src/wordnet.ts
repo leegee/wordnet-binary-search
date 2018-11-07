@@ -179,7 +179,7 @@ export namespace Wordnet {
             this.tagsenseCnt = Number(parts.shift());
             this.synsetOffsets = parts.map(i => Number(i));
 
-            // this.addPointerAccessors();
+            this.addPointerAccessors();
         }
 
         /**
