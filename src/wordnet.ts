@@ -211,7 +211,20 @@ export namespace Wordnet {
             self.wCnt = Number(parts.shift());
             self.word = parts.shift();
             self.lexId = parts.shift();
-            self.pCnt = Number(parts.shift());
+
+            // Remove (or do what with?) additional word/lexId pairs:
+            // iterate whilst next part is not a pCnt 3-digit decimal integer:
+            while (!parts[0].match(/^\d{3}$/)) {
+                parts.shift(); // word
+                parts.shift(); // lexId
+            }
+
+            const pCnt = parts.shift();
+            self.pCnt = Number(pCnt);
+            if (isNaN(self.pCnt)) {
+                throw new Error('pCnt NaN:' + pCnt + '\n' + line + '\nword=' + self.word);
+            }
+
             [self.ptrs, parts] = Pointer._fromLineFields(self.pCnt, parts);
             return self;
         }

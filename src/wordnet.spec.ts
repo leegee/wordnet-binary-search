@@ -92,7 +92,7 @@ describe('Wordnet', () => {
         });
     });
 
-    it('finds all forms of  "like"', () => {
+    it('finds all forms of  "excuse"', () => {
         const indexEntries = Wordnet.Wordnet.getIndexEntries('excuse');
         expect(indexEntries).to.be.an.instanceof(Array);
         expect(indexEntries).to.have.length(1);
@@ -103,6 +103,16 @@ describe('Wordnet', () => {
             expect(senses).to.be.an.instanceof(Array);
             senses.forEach(sense => {
                 expect(sense).to.be.an.instanceof(Wordnet.Sense);
+            });
+        });
+    });
+
+    xit('finds the opposites of all forms of  "excuse"', () => {
+        Wordnet.Wordnet.getIndexEntries('excuse').forEach(indexEntry => {
+            const senses = indexEntry.wordnetSenses;
+            console.log(senses);
+            senses.forEach( sense => {
+                console.log(sense['antonym']);
             });
         });
     });
