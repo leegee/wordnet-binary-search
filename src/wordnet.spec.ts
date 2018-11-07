@@ -11,6 +11,8 @@ const expect = chai.expect;
 import { Wordnet } from './wordnet';
 
 Wordnet.Wordnet.logger = new Console({
+    // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30339
+    // @ts-ignore
     stderr: devnull(),
     stdout: devnull() // process.stdout
 });

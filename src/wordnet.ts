@@ -312,17 +312,17 @@ export namespace Wordnet {
         static GET_synset_POINTER_RE = /(?<pointerSymbol>\!)\s(?<synsetOffset>\d+)\s(?<pos>\w)\s(?<source>\d\d)(?<target>\d\d)/;
 
         static indexFiles: { [key: string]: IndexFile } = {
-            r: new IndexFile('adj', 'r', path.resolve('src/assets/wordnet/index.adj')),
-            a: new IndexFile('adv', 'a', path.resolve('src/assets/wordnet/index.adv')),
-            n: new IndexFile('noun', 'n', path.resolve('src/assets/wordnet/index.noun')),
-            v: new IndexFile('verb', 'v', path.resolve('src/assets/wordnet/index.verb'))
+            r: new IndexFile('adj', 'r', path.resolve('assets/wordnet/index.adj')),
+            a: new IndexFile('adv', 'a', path.resolve('assets/wordnet/index.adv')),
+            n: new IndexFile('noun', 'n', path.resolve('assets/wordnet/index.noun')),
+            v: new IndexFile('verb', 'v', path.resolve('assets/wordnet/index.verb'))
         };
 
         static dataFiles: { [key: string]: DataFile } = {
-            r: new DataFile('adj', 'r', path.resolve('src/assets/wordnet/data.adj')),
-            a: new DataFile('adv', 'a', path.resolve('src/assets/wordnet/data.adv')),
-            n: new DataFile('noun', 'n', path.resolve('src/assets/wordnet/data.noun')),
-            v: new DataFile('verb', 'v', path.resolve('src/assets/wordnet/data.verb'))
+            r: new DataFile('adj', 'r', path.resolve('assets/wordnet/data.adj')),
+            a: new DataFile('adv', 'a', path.resolve('assets/wordnet/data.adv')),
+            n: new DataFile('noun', 'n', path.resolve('assets/wordnet/data.noun')),
+            v: new DataFile('verb', 'v', path.resolve('assets/wordnet/data.verb'))
         };
 
         static _logger: any = console;
@@ -353,13 +353,4 @@ export namespace Wordnet {
 
     }
 }
-
-
-
-
-
-
-
-
-
 

@@ -1,7 +1,0 @@
-{
-  "name": "time-recorder",
-  "integrations": {
-    "cordova": {}
-  },
-  "type": "angular"
-}
