@@ -199,9 +199,10 @@ export namespace Wordnet {
 
         static fromLine(line: string): Sense {
             const self = new Sense();
+            line = line.trimRight();
 
-            let parts = line.split('|', 2);
-            self.gloss = parts[1].trim();
+            let parts = line.split(/\s*\|\s*/, 2);
+            self.gloss = parts[1];
 
             parts = line.split(' ');
 
