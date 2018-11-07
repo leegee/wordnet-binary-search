@@ -13,7 +13,7 @@
 
     const indexEntriesForAllFormsOfExcuse = Wordnet.Wordnet.getIndexEntries('excuse');
     indexEntriesForAllFormsOfExcuse.forEach( indexEntry => {
-        const senses = indexEntry.wordnetSenses;
+        const senses = indexEntry.senses;
         senses.forEach( sense => console.log(sense) );
     });
 
@@ -27,7 +27,7 @@
 
 Following the Wordnet format:
 
-```
+```ecma
     {
         n: { // The pointer_symbols for nouns:
             antonym: '!',

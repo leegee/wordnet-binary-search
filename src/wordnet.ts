@@ -2,19 +2,54 @@ import * as fs from 'fs';
 import { Console } from 'console';
 import * as devnull from 'dev-null';
 
+/**
+ * @see https://wordnet.princeton.edu/documentation/wninput5wn
+ * @see https://wordnet.princeton.edu/documentation/wndb5wn
+
+ */
 export namespace Wordnet {
     const INPUT_BUFFER_READ_LINE_SIZE = 256;
 
-    /**
-     * Entries in the Wordnet `index.*` files, whose format in 3.1 is as follows:
-     *
-     *  `lemma  pos  synset_cnt  p_cnt  [ptr_symbol...]  sense_cnt  tagsense_cnt   synset_offset  [synset_offset...]`
-     */
-    export class IndexEntry {
+    export class Pointer {
+        pointerSymbol: string;
+        synsetOffset: number;
+        pos: string;
+        source: string; // two-digit hex
+        target: string; // two-digit hex
+
+        constructor(
+            pointerSymbol: string,
+            synsetOffset: number,
+            pos: string,
+            sourceTarget: string
+        ) {
+            this.pointerSymbol = pointerSymbol;
+            this.synsetOffset = synsetOffset;
+            this.pos = pos;
+            this.source = sourceTarget.substr(0, 2);
+            this.target = sourceTarget.substr(2, 2);
+        }
+
+        static fromLineFields(pCnt: number, parts: string[]): Pointer[] {
+            const ptrs: Pointer[] = [];
+            for (let i = 1; i <= pCnt; i++) {
+                ptrs.push(
+                    new Pointer(
+                        parts.shift(),
+                        Number(parts.shift()),
+                        parts.shift(),
+                        parts.shift()
+                    )
+                );
+            }
+            return ptrs;
+        }
+    }
+
+    class WithPointers {
         /**
          * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
          * Second-level is keyed by phrase taken from then `wninput(WN5)` document.
-         * @see https://wordnet.princeton.edu/documentation/wninput5wn
          */
         static _pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
             n: { // The pointer_symbols for nouns:
@@ -71,117 +106,104 @@ export namespace Wordnet {
             }
         };
 
-        word: string; // lemma
-        pos: string; // pos
-        ptrSymbols: string[] = [];
+        _derefedPointer: { [key: string]: Sense[] } = {};
         synsetOffsets: number[] = [];
-        tagsenseCnt: number;
-        _wordnetSenses: Sense[] = [];
-        _antonyms: Sense[] = [];
-        _pointedAt: { [key: string]: Sense[] } = {};
 
-        /**
-         *
-         * @param line The line from an `index.*` "database file".
-         */
-        constructor(line: string) {
-            const parts = line.trim().split(/\s+/);
-            this.word = parts.shift();
-            this.pos = parts.shift();
-            parts.shift(); // sense_cnt
-            const p_cnt = Number(parts.shift());
-            for (let i = 0; i < p_cnt; i++) {
-                this.ptrSymbols.push(parts.shift());
-            }
-            parts.shift();  // sense_cnt unused, as senses are at EOL
-            this.tagsenseCnt = Number(parts.shift());
-            this.synsetOffsets = parts.map(i => Number(i));
-
-            Object.keys(IndexEntry._pointerMapEngToSymbol[this.pos]).forEach(englishKey => {
+        addPointerAccessors() {
+            const ssTypePos = this['pos'] || this['ssType'];
+            Object.keys(WithPointers._pointerMapEngToSymbol[ssTypePos]).forEach(englishKey => {
                 Object.defineProperty(this, englishKey, {
                     get: () => this.derefPointer(
-                        IndexEntry._pointerMapEngToSymbol[this.pos][englishKey]
+                        WithPointers._pointerMapEngToSymbol[ssTypePos][englishKey]
                     )
                 });
             });
         }
 
         /**
-         * Dereferences the entry's senses.
-         * @returns Sense[]
-         */
-        get wordnetSenses(): Sense[] {
-            Wordnet.logger.debug('get wordnetSenses from [%s]', this._wordnetSenses);
-            if (!this._wordnetSenses.length) {
-                this.synsetOffsets.forEach(synsetOffset => {
-                    Wordnet.logger.debug('Try synsetOffset', synsetOffset, 'with pos', this.pos);
-                    this._wordnetSenses.push(
-                        Wordnet.dataFiles[this.pos]._getSense(synsetOffset)
-                    );
-                });
-            }
-            return this._wordnetSenses;
-        }
-
-        /**
          * Dereferences the entry's semantic pointers from the entry's sense definitions,
          * as identified by their `wininput(5WN)` pointer symbol.
+         * 
          * @param ptrSymbol Pointer symbol.
          * @returns Sense[]
          * @see 'Pointers' in  https://wordnet.princeton.edu/documentation/wninput5wn
          */
         derefPointer(ptrSymbol: string): Sense[] {
-            if (!this._pointedAt[ptrSymbol]) {
-                this._pointedAt[ptrSymbol] = [];
-                this.wordnetSenses.forEach(sense => {
-                    sense.ptrs.filter(ptr => ptr.pointerSymbol === ptrSymbol).forEach(ptr => {
-                        const word = Sense.fromPointer(ptr);
-                        this._pointedAt[ptrSymbol].push(word);
-                    });
+            if (!this._derefedPointer[ptrSymbol]) {
+                this._derefedPointer[ptrSymbol] =  [];
+                const pointers = this.hasOwnProperty('senses') ? this['senses'].map(sense => sense.pointers) : this['pointers'];
+                pointers.filter(ptr => ptr.pointerSymbol === ptrSymbol).forEach(ptr => {
+                    this._derefedPointer[ptrSymbol].push(
+                        Sense.fromPointer(ptr)
+                    );
                 });
             }
-            return this._pointedAt[ptrSymbol];
+            return this._derefedPointer[ptrSymbol].length ? this._derefedPointer[ptrSymbol] : null;
         }
     }
 
-    export class Pointer {
-        pointerSymbol: string;
-        synsetOffset: number;
-        pos: string;
-        source: string; // two-digit hex
-        target: string; // two-digit hex
+    /**
+     * Entries in the Wordnet `index.*` files, whose format in 3.1 is as follows:
+     *
+     *  `lemma  pos  synset_cnt  p_cnt  [ptr_symbol...]  sense_cnt  tagsense_cnt   synset_offset  [synset_offset...]`
+     */
+    export class IndexEntry
+    // extends WithPointers 
+    {
+        word: string; // lemma
+        pos: string; // pos
+        synsetCnt: number;
+        pCnt: number;
+        pointers: string[] = [];
+        tagsenseCnt: number;
+        synsetOffsets: number[] = [];
+        _senses: Sense[] = [];
 
-        constructor(
-            pointerSymbol: string,
-            synsetOffset: number,
-            pos: string,
-            sourceTarget: string
-        ) {
-            this.pointerSymbol = pointerSymbol;
-            this.synsetOffset = synsetOffset;
-            this.pos = pos;
-            this.source = sourceTarget.substr(0, 2);
-            this.target = sourceTarget.substr(2, 2);
+        /**
+         *
+         * @param line The line from an `index.*` "database file".
+         */
+        constructor(line: string) {
+            // super();
+            const parts = line.trim().split(/\s+/);
+            this.word = parts.shift();
+            this.pos = parts.shift();
+            this.synsetCnt = Number(parts.shift());
+
+            this.pCnt = Number(parts.shift());
+            for (let i = 0; i < this.pCnt; i++) {
+                this.pointers.push(parts.shift());
+            }
+            // this.pointers = Pointer._fromLineFields(this.pCnt, parts)
+
+            parts.shift();  // sense_cnt same as synset count: senses are at EOL
+
+            this.tagsenseCnt = Number(parts.shift());
+            this.synsetOffsets = parts.map(i => Number(i));
+
+            // this.addPointerAccessors();
         }
 
-        static _fromLineFields(pCnt: number, parts: string[]): [Pointer[], string[]] {
-            const ptrs: Pointer[] = [];
-            for (let i = 1; i <= pCnt; i++) {
-                ptrs.push(
-                    new Pointer(
-                        parts.shift(),
-                        Number(parts.shift()),
-                        parts.shift(),
-                        parts.shift()
-                    )
-                );
+        /**
+         * Dereferences the entry's senses.
+         * @returns Sense[]
+         */
+        get senses(): Sense[] {
+            Wordnet.logger.debug('get senses from [%s]', this._senses);
+            if (!this._senses.length) {
+                this.synsetOffsets.forEach(synsetOffset => {
+                    this._senses.push(
+                        Sense.fromSynsetOffset(synsetOffset, this.pos)
+                        // Wordnet.dataFiles[this.pos]._getSense(synsetOffset)
+                    );
+                })
             }
-            return [ptrs, parts];
+            return this._senses;
         }
     }
 
     // synset_offset  lex_filenum  ss_type  w_cnt  word  lex_id  [word  lex_id...]  p_cnt  [ptr...]  [frames...]  |   gloss
-    export class Sense {
+    export class Sense extends WithPointers {
         synsetOffset: number;
         lexFilenum: number;
         ssType: string; // aka pos
@@ -189,14 +211,40 @@ export namespace Wordnet {
         word: string;
         lexId: string; // 1-digit hex
         pCnt: number; // 3-digit decimal
-        ptrs: Pointer[];
+        pointers: Pointer[];
         franes: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
         gloss: string;
 
-        static fromPointer(ptr: Pointer): Sense {
-            return Wordnet.dataFiles[ptr.pos]._getSense(ptr.synsetOffset);
+        /**
+         * Constructs a new `Sense` object.
+         * 
+         * @param synsetOffset Numeric offset taken from the index.
+         * @param posSstype  The index/data type 
+         * @return A new Sense
+         */
+        static fromSynsetOffset(synsetOffset: number, posSstype: string) {
+            return Sense.fromLine(
+                Wordnet.dataFiles[posSstype].getLineBySynsetOffset(synsetOffset)
+            );
         }
 
+        /**
+         * Constructs a new `Sense` object instantiated from the supplied `Pointer`.
+         * 
+         * @param ptr Pointer
+         * @return A new Sense
+         */
+        static fromPointer(ptr: Pointer): Sense {
+            return Sense.fromLine(
+                Wordnet.dataFiles[ptr.pos].getLineBySynsetOffset(ptr.synsetOffset)
+            );
+        }
+
+        /**
+         * * Constructs a new `Sense` object.
+         * 
+         * @param line A line from a `data.*` file.
+         */
         static fromLine(line: string): Sense {
             const self = new Sense();
             line = line.trimRight();
@@ -226,7 +274,8 @@ export namespace Wordnet {
                 throw new Error('pCnt NaN:' + pCnt + '\n' + line + '\nword=' + self.word);
             }
 
-            [self.ptrs, parts] = Pointer._fromLineFields(self.pCnt, parts);
+            self.pointers = Pointer.fromLineFields(self.pCnt, parts);
+            self.addPointerAccessors();
             return self;
         }
     }
@@ -257,14 +306,14 @@ export namespace Wordnet {
          * Returns a Wordnet sense object representing the line at `synsetOffest`.
          * @param synsetOffset The line offset in the `data.${this.type}` file.
          */
-        _getSense(synsetOffset: number): Sense {
-            Wordnet.logger.debug('getSense for pos [%s] synset [%d]', this.type, synsetOffset);
-            const line = this._getLineBySynsetOffset(synsetOffset);
-            Wordnet.logger.debug('Got line: ', line);
-            return Sense.fromLine(line);
-        }
+        // _getSense(synsetOffset: number): Sense {
+        //     Wordnet.logger.debug('getSense for pos [%s] synset [%d]', this.type, synsetOffset);
+        //     const line = this._getLineBySynsetOffset(synsetOffset);
+        //     Wordnet.logger.debug('Got line: ', line);
+        //     return Sense.fromLine(line);
+        // }
 
-        _getLineBySynsetOffset(synsetOffset: number): string {
+        getLineBySynsetOffset(synsetOffset: number): string {
             if (!synsetOffset || typeof synsetOffset !== 'number') {
                 throw new TypeError('Expected a synsetOffset as a Number');
             }
@@ -399,6 +448,10 @@ export namespace Wordnet {
             return Wordnet._logger;
         }
 
+        static _prepare(subject: string): string {
+            return subject.toLocaleLowerCase().replace(/\s+/, '_');
+        }
+
         /**
          * Find the index entry for a specified form a word.
          * 
@@ -408,7 +461,9 @@ export namespace Wordnet {
          * @see IndexFile#getIndexEntry
          */
         static getIndexEntry(subject: string, filetypeKey: string): IndexEntry | null {
-            return this.indexFiles[filetypeKey].getEntry(subject);
+            return this.indexFiles[filetypeKey].getEntry(
+                Wordnet._prepare(subject)
+            );
         }
 
         /**
@@ -419,7 +474,9 @@ export namespace Wordnet {
         static getIndexEntries(subject: string): IndexEntry[] | null {
             return Object.keys(this.indexFiles)
                 .filter(type => this.indexFiles.hasOwnProperty(type))
-                .map(type => this.indexFiles[type].getEntry(subject))
+                .map(type => this.indexFiles[type].getEntry(
+                    Wordnet._prepare(subject)
+                ))
                 .filter((word: IndexEntry) => word !== null);
 
         }
