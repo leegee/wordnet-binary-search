@@ -309,8 +309,6 @@ export namespace Wordnet {
 
     // tslint:disable-next-line:no-shadowed-variable
     export class Wordnet {
-        static GET_synset_POINTER_RE = /(?<pointerSymbol>\!)\s(?<synsetOffset>\d+)\s(?<pos>\w)\s(?<source>\d\d)(?<target>\d\d)/;
-
         static indexFiles: { [key: string]: IndexFile } = {
             r: new IndexFile('adj', 'r', path.resolve('assets/wordnet/index.adj')),
             a: new IndexFile('adv', 'a', path.resolve('assets/wordnet/index.adv')),
