@@ -147,9 +147,7 @@ export namespace Wordnet {
      *
      *  `lemma  pos  synset_cnt  p_cnt  [ptr_symbol...]  sense_cnt  tagsense_cnt   synset_offset  [synset_offset...]`
      */
-    export class IndexEntry
-    // extends WithPointers 
-    {
+    export class IndexEntry extends WithPointers {
         word: string; // lemma
         pos: string; // pos
         synsetCnt: number;
@@ -164,7 +162,7 @@ export namespace Wordnet {
          * @param line The line from an `index.*` "database file".
          */
         constructor(line: string) {
-            // super();
+            super();
             const parts = line.trim().split(/\s+/);
             this.word = parts.shift();
             this.pos = parts.shift();
