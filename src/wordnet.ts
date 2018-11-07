@@ -99,7 +99,7 @@ export namespace Wordnet {
 
             Object.keys(IndexEntry._pointerMapEngToSymbol[this.pos]).forEach(englishKey => {
                 Object.defineProperty(this, englishKey, {
-                    get: () => this.getPointer(
+                    get: () => this.derefPointer(
                         IndexEntry._pointerMapEngToSymbol[this.pos][englishKey]
                     )
                 });
@@ -130,7 +130,7 @@ export namespace Wordnet {
          * @returns Sense[]
          * @see 'Pointers' in  https://wordnet.princeton.edu/documentation/wninput5wn
          */
-        getPointer(ptrSymbol: string): Sense[] {
+        derefPointer(ptrSymbol: string): Sense[] {
             if (!this._pointedAt[ptrSymbol]) {
                 this._pointedAt[ptrSymbol] = [];
                 this.wordnetSenses.forEach(sense => {
