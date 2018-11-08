@@ -8,7 +8,9 @@
   },
   "main": "index.ts",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@log4js-node/log4js-api": "^1.0.2"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.6",
     "@types/chai-as-promised": "^7.1.0",
@@ -17,10 +19,11 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "dev-null": "^0.1.1",
+    "log4js": "^3.0.6",
     "mocha": "^5.2.0",
     "ts-node": "~7.0.0",
     "tslint": "~5.11.0",
     "typescript": "^3.1.6"
   },
-  "description": "Access to Wordnet 3.1 files through binary-search"
+  "description": "Access to Wordnet 3.* files through binary-search"
 }

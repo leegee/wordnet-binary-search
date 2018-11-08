@@ -1,13 +1,14 @@
 import * as fs from 'fs';
 import { Console } from 'console';
 import * as devnull from 'dev-null';
+import { join } from 'path';
+import { Logger } from 'log4js';
 
 /**
  * @see https://wordnet.princeton.edu/documentation/wninput5wn
  * @see https://wordnet.princeton.edu/documentation/wndb5wn
 
  */
-const INPUT_BUFFER_READ_LINE_SIZE = 256;
 
 export class Pointer {
     pointerSymbol: string;
@@ -186,7 +187,6 @@ export class IndexEntry extends WithPointers {
      * @returns Sense[]
      */
     get senses(): Sense[] {
-        Wordnet.logger.debug('get senses from [%s]', this._senses);
         if (!this._senses.length) {
             this.synsetOffsets.forEach(synsetOffset => {
                 this._senses.push(
@@ -299,6 +299,8 @@ export class SourceFile {
 
 
 export class DataFile extends SourceFile {
+    static INPUT_BUFFER_READ_LINE_SIZE = 1024;
+
     /**
      * Returns a Wordnet sense object representing the line at `synsetOffest`.
      * @param synsetOffset The line offset in the `data.${this.type}` file.
@@ -311,38 +313,44 @@ export class DataFile extends SourceFile {
     // }
 
     getLineBySynsetOffset(synsetOffset: number): string {
+        Wordnet.logger.debug('Datafile.getLineBySynsetOffset [%d]', synsetOffset);
         if (!synsetOffset || typeof synsetOffset !== 'number') {
             throw new TypeError('Expected a synsetOffset as a Number');
         }
         let readFrom = synsetOffset;
-        const inputBuffer = Buffer.alloc(INPUT_BUFFER_READ_LINE_SIZE);
+        const inputBuffer = Buffer.alloc(DataFile.INPUT_BUFFER_READ_LINE_SIZE);
         fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, readFrom);
         let line = inputBuffer.toString();
 
         while (line.indexOf('\n') === -1) {
-            readFrom += INPUT_BUFFER_READ_LINE_SIZE;
-            Wordnet.logger.debug('Read more from ', readFrom);
+            readFrom += DataFile.INPUT_BUFFER_READ_LINE_SIZE;
+            Wordnet.logger.warn('Read more from %d...', readFrom);
             fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, readFrom);
             line = line + inputBuffer.toString();
+            Wordnet.logger.debug('...line now [%s]', line);
         }
 
         line = line.substring(0, line.indexOf('\n')).trimRight();
+        Wordnet.logger.debug('RV [%s]', line);
         return line;
     }
 }
 
 
 export class IndexFile extends SourceFile {
+    static INPUT_BUFFER_READ_LINE_SIZE = 127;
+
     /**
     * Returns a index entry for the supplied word.
     * @param subject Word sought.
     * @return IndexEntry or `null`
     */
     getEntry(subject: string): IndexEntry | null {
+        Wordnet.logger.debug('getEntry %s', subject);
         const stats = fs.fstatSync(this.fd);
         return this._getIndexEntry(
             subject.toLocaleLowerCase(),
-            Buffer.alloc(INPUT_BUFFER_READ_LINE_SIZE),
+            Buffer.alloc(IndexFile.INPUT_BUFFER_READ_LINE_SIZE),
             Math.floor(stats.size / 2),
             stats.size
         );
@@ -350,6 +358,7 @@ export class IndexFile extends SourceFile {
 
     /*
      * Binary search.
+
      * @param subject The subject of the search.
      * @param inputBuffer Preallocated input buffer.
      * @param pos Current position within the intput file.
@@ -361,49 +370,54 @@ export class IndexFile extends SourceFile {
         pos: number,
         totalLength: number
     ): IndexEntry | null {
+        inputBuffer = inputBuffer.fill('');
         fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, pos);
-        // Wordnet.logger.debug('\n[%s] Read from %d / %d: %s', subject, pos, totalLength, inputBuffer.toString());
+        Wordnet.logger.debug('\nFor [%s] Read from %d / %d:\n%s\n', subject, pos, totalLength, inputBuffer);
 
-        const newlineStartPos = inputBuffer.indexOf('\n') + 1;
-        const wordStartPos = newlineStartPos;
-        const wordEndPos = inputBuffer.indexOf(` `, wordStartPos);
-        const word = inputBuffer.toString().substring(wordStartPos, wordEndPos);
-        // Wordnet.logger.debug('Reading word [%s] looking for [%s]', word, subject);
+        const inputStr = inputBuffer.toString();
+        const m  = inputStr.match(/\n(([a-z_-]+)(.+?))\s*\n/);
 
-        const comparision = subject.localeCompare(word);
-        if (comparision === 0) {
-            // Wordnet.logger.debug('FOUND WITHIN [%s]');
-            let line = inputBuffer.toString().substring(newlineStartPos);
-            // Wordnet.logger.silly('Line [%s]', line);
-            if (line.indexOf('\n') === -1) {
-                // Wordnet.logger.silly('Read more');
-                fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, pos + newlineStartPos);
-                // Wordnet.logger.debug('Final read [%s]', inputBuffer);
-                line = line + inputBuffer.toString();
-            }
-            line = line.substring(0, line.indexOf('\n')).trimRight();
-            // Wordnet.logger.debug('\n\nFINAL FOUND LINE [%s] ', line);
-            return new IndexEntry(line);
-        }
-
-        if (comparision < 0) {
-            totalLength = pos;
-            pos = Math.floor(pos = pos / 2);
-            // Wordnet.logger.silly('<', pos);
+        if (!m) {
+            IndexFile.INPUT_BUFFER_READ_LINE_SIZE = Math.floor(IndexFile.INPUT_BUFFER_READ_LINE_SIZE * 1.5);
+            inputBuffer = Buffer.alloc(IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
+            Wordnet.logger.warn('Increasing buffer size to by f1.5 to ', IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
         } else {
-            pos = pos + Math.floor((totalLength - pos) / 2);
-            // Wordnet.logger.silly('>', pos, totalLength);
+            const [, line, indexWord] = m;
+            const comparision = subject.localeCompare(indexWord);
+            Wordnet.logger.debug('Checking line [%s] === [%d]', line, comparision);
+
+            if (comparision === 0) {
+                Wordnet.logger.debug('FOUND [%s] as [%s] IN LINE [%s]', subject, indexWord, line);
+                return new IndexEntry(line);
+            }
+
+            if (comparision < 0) {
+                totalLength = pos;
+                pos = Math.floor(pos = pos / 2);
+                Wordnet.logger.debug('<', pos);
+            } else {
+                pos = pos + Math.floor((totalLength - pos) / 2);
+                Wordnet.logger.debug('>', pos, totalLength);
+            }
+
+            if (totalLength - pos <= IndexFile.INPUT_BUFFER_READ_LINE_SIZE) {
+                // TODO Parse that
+                Wordnet.logger.warn(
+                    'totalLength %d - pos %d <= IndexFile.INPUT_BUFFER_READ_LINE_SIZE %d',
+                    totalLength, pos, IndexFile.INPUT_BUFFER_READ_LINE_SIZE
+                );
+                IndexFile.INPUT_BUFFER_READ_LINE_SIZE = Math.floor(IndexFile.INPUT_BUFFER_READ_LINE_SIZE * 0.8);
+                if (IndexFile.INPUT_BUFFER_READ_LINE_SIZE < 10) {
+                    Wordnet.logger.warn('Buffer reduced to ', IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
+                    return null;
+                }
+            } else if (pos >= totalLength || pos <= 0) {
+                Wordnet.logger.warn('Not found', subject, pos, totalLength);
+                return null;
+            }
         }
 
-        if (totalLength - pos <= INPUT_BUFFER_READ_LINE_SIZE) {
-            // TODO Parse that
-            return null;
-        } else if (pos >= totalLength || pos <= 0) {
-            Wordnet.logger.warn('Not found', subject, pos, totalLength);
-            return null;
-        }
-
-        // Wordnet.logger.silly('recurse ', subject, pos, totalLength);
+        Wordnet.logger.trace('Recurse for [%s] at pos %d / %d ', subject, pos, totalLength);
         return this._getIndexEntry(subject, inputBuffer, pos, totalLength);
     }
 }
