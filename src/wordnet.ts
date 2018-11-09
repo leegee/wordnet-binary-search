@@ -51,7 +51,7 @@ class WithPointers {
      * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
      * Second-level is keyed by phrase taken from then `wninput(WN5)` document.
      */
-    static _pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
+    static pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
         n: { // The pointer_symbols for nouns:
             antonym: '!',
             hypernym: '@',
@@ -111,10 +111,10 @@ class WithPointers {
 
     addPointerAccessors() {
         const ssTypePos = this['pos'] || this['ssType'];
-        Object.keys(WithPointers._pointerMapEngToSymbol[ssTypePos]).forEach(englishKey => {
+        Object.keys(WithPointers.pointerMapEngToSymbol[ssTypePos]).forEach(englishKey => {
             Object.defineProperty(this, englishKey, {
                 get: () => this.derefPointer(
-                    WithPointers._pointerMapEngToSymbol[ssTypePos][englishKey]
+                    WithPointers.pointerMapEngToSymbol[ssTypePos][englishKey]
                 )
             });
         });

@@ -4,17 +4,20 @@
 
     import { Wordnet } from 'wordnet-binary-search';
 
-    Wordnet.Wordnet.dataDir = 'downloaded/wordnet-db');
+    Wordnet.Wordnet.dataDir = '../downloads/WordNet-3.0/dict');
 
-    const importVerbIndexEntry = Wordnet.Wordnet.find('import', 'v');
+    const indexEntryForVerbForm = Wordnet.Wordnet.find('excuse', 'v');
+    const indexEntriesForAllForms1 = Wordnet.Wordnet.find('excuse');
+    const indexEntriesForAllForms2 = Wordnet.Wordnet.findAll('excuse');
 
-    const antonymOfImportVerb1 = importVerbIndexEntry['antonym'];
-    const antonymOfImportVerb2 = importVerbIndexEntry.derefPointer('!');
-
-    const indexEntriesForAllFormsOfExcuse = Wordnet.Wordnet.findAll('excuse');
-    indexEntriesForAllFormsOfExcuse.forEach( indexEntry => {
-        const senses = indexEntry.senses;
-        senses.forEach( sense => console.log('Sense [%o], [%s]: hypernym: [%s]', sense, sense, sense.hypernym );
+    indexEntriesForAllForms1.forEach(indexEntry => {
+        indexEntry.senses.forEach(sense => {
+            console.log(
+                'hypernym for sense "[%s]": [%s]',
+                sense,
+                sense['hypernym'][0]
+            );
+        });
     });
 
 ## DESCRIPTION
@@ -23,11 +26,20 @@
 * basic object modelling of Wordnet in Typescript
 * automatic, lazy-loaded  dereferencing of word senses and semantic pointers
 
+## TODO
+
+Lots, probably - it currently does what I want.
+
+The specs do not say if there can be more than one pointer of each type,
+so currently multiple are supported. This may change.
+
 ### POINTER REFERENCE
 
-Following the Wordnet format:
+Pointers follow the Wordnet format, and are stored in `WithPointers.pointerMapEngToSymbol`, keyed by Wordnet word form identifier: `n` for noun, `v` for verb, `a` for adverb, `r` for adjective. Pointers can be dereferenced manually by calling the `derefPointer(symbol)` method upon the `Sense` object (where symbol is the Wordnet `pointer_symbol`, eg, `@i`), or by calling the dynamically-generated lazy-loaded memoised property of the `Sense` named after the `pointer_symbol` name (eg `instanceHypernym` for `@i`).
 
 ```ecma
+    console.log(WithPointers.pointerMapEngToSymbol);
+    
     {
         n: { // The pointer_symbols for nouns:
             antonym: '!',
