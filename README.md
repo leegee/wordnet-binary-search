@@ -4,11 +4,11 @@
 
     import { Wordnet } from 'wordnet-binary-search';
 
-    Wordnet.Wordnet.dataDir = '../downloads/WordNet-3.0/dict');
+    Wordnet.dataDir = '../downloads/WordNet-3.0/dict');
 
-    const indexEntryForVerbForm = Wordnet.Wordnet.find('excuse', 'v');
-    const indexEntriesForAllForms1 = Wordnet.Wordnet.find('excuse');
-    const indexEntriesForAllForms2 = Wordnet.Wordnet.findAll('excuse');
+    const indexEntryForVerbForm = Wordnet.find('excuse', 'v');
+    const indexEntriesForAllForms1 = Wordnet.find('excuse');
+    const indexEntriesForAllForms2 = Wordnet.findAll('excuse');
 
     indexEntriesForAllForms1.forEach(indexEntry => {
         indexEntry.senses.forEach(sense => {
