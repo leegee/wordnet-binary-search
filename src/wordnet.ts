@@ -1,8 +1,5 @@
 import * as fs from 'fs';
-import { Console } from 'console';
-import * as devnull from 'dev-null';
-import { join } from 'path';
-import { Logger } from 'log4js';
+import * as log4js from '@log4js-node/log4js-api';
 
 /**
  * @see https://wordnet.princeton.edu/documentation/wninput5wn
@@ -451,12 +448,8 @@ export class Wordnet {
         }
     };
 
-    static _logger = new Console({
-        // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/30339
-        // @ts-ignore
-        stderr: devnull(),
-        stdout: devnull()
-    });
+    static _logger = log4js.getLogger('wordnet-binary-search');
+    
 
     static set logger(userSuppliedLogger) {
         this._logger = userSuppliedLogger;
