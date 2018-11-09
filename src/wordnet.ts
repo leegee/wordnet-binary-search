@@ -182,6 +182,10 @@ export class IndexEntry extends WithPointers {
         this.addPointerAccessors();
     }
 
+    toString(): string {
+        return this.word.replace('_', ' ');
+    }
+
     /**
      * Dereferences the entry's senses.
      * @returns Sense[]
@@ -275,6 +279,10 @@ export class Sense extends WithPointers {
         self.addPointerAccessors();
         return self;
     }
+
+    toString(): string {
+        return this.word.replace('_', ' ');
+    }
 }
 
 
@@ -324,7 +332,7 @@ export class DataFile extends SourceFile {
 
         while (line.indexOf('\n') === -1) {
             readFrom += DataFile.INPUT_BUFFER_READ_LINE_SIZE;
-            Wordnet.logger.warn('Read more from %d...', readFrom);
+            Wordnet.logger.debug('Read more from %d...', readFrom);
             fs.readSync(this.fd, inputBuffer, 0, inputBuffer.byteLength, readFrom);
             line = line + inputBuffer.toString();
             Wordnet.logger.debug('...line now [%s]', line);
@@ -348,7 +356,7 @@ export class IndexFile extends SourceFile {
     getEntry(subject: string): IndexEntry | null {
         Wordnet.logger.debug('getEntry %s', subject);
         const stats = fs.fstatSync(this.fd);
-        return this._getIndexEntry(
+        return this._find(
             subject.toLocaleLowerCase(),
             Buffer.alloc(IndexFile.INPUT_BUFFER_READ_LINE_SIZE),
             Math.floor(stats.size / 2),
@@ -364,7 +372,7 @@ export class IndexFile extends SourceFile {
      * @param pos Current position within the intput file.
      * @param totalLength Total length of the file.
      */
-    _getIndexEntry(
+    _find(
         subject: string,
         inputBuffer: Buffer,
         pos: number,
@@ -375,12 +383,12 @@ export class IndexFile extends SourceFile {
         Wordnet.logger.debug('\nFor [%s] Read from %d / %d:\n%s\n', subject, pos, totalLength, inputBuffer);
 
         const inputStr = inputBuffer.toString();
-        const m  = inputStr.match(/\n(([a-z_-]+)(.+?))\s*\n/);
+        const m = inputStr.match(/\n(([a-z_-]+)(.+?))\s*\n/);
 
         if (!m) {
             IndexFile.INPUT_BUFFER_READ_LINE_SIZE = Math.floor(IndexFile.INPUT_BUFFER_READ_LINE_SIZE * 1.5);
             inputBuffer = Buffer.alloc(IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
-            Wordnet.logger.warn('Increasing buffer size to by f1.5 to ', IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
+            Wordnet.logger.debug('Increasing buffer size for [%s] to by f1.5 to ', subject, IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
         } else {
             const [, line, indexWord] = m;
             const comparision = subject.localeCompare(indexWord);
@@ -401,14 +409,13 @@ export class IndexFile extends SourceFile {
             }
 
             if (totalLength - pos <= IndexFile.INPUT_BUFFER_READ_LINE_SIZE) {
-                // TODO Parse that
-                Wordnet.logger.warn(
+                Wordnet.logger.debug(
                     'totalLength %d - pos %d <= IndexFile.INPUT_BUFFER_READ_LINE_SIZE %d',
                     totalLength, pos, IndexFile.INPUT_BUFFER_READ_LINE_SIZE
                 );
                 IndexFile.INPUT_BUFFER_READ_LINE_SIZE = Math.floor(IndexFile.INPUT_BUFFER_READ_LINE_SIZE * 0.8);
                 if (IndexFile.INPUT_BUFFER_READ_LINE_SIZE < 10) {
-                    Wordnet.logger.warn('Buffer reduced to ', IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
+                    Wordnet.logger.debug('Buffer reduced to ', IndexFile.INPUT_BUFFER_READ_LINE_SIZE);
                     return null;
                 }
             } else if (pos >= totalLength || pos <= 0) {
@@ -418,7 +425,7 @@ export class IndexFile extends SourceFile {
         }
 
         Wordnet.logger.trace('Recurse for [%s] at pos %d / %d ', subject, pos, totalLength);
-        return this._getIndexEntry(subject, inputBuffer, pos, totalLength);
+        return this._find(subject, inputBuffer, pos, totalLength);
     }
 }
 
@@ -467,14 +474,19 @@ export class Wordnet {
      * Find the index entry for a specified form a word.
      * 
      * @param subject The word sought.
-     * @param filetypeKey A form for which to search.
+     * @param filetypeKeys? Optinal - One or more forms for which to search.
      * @param IndexEntry[] 
-     * @see IndexFile#getIndexEntry
+     * @see IndexFile#find
      */
-    static getIndexEntry(subject: string, filetypeKey: string): IndexEntry | null {
-        return this.indexFiles[filetypeKey].getEntry(
-            Wordnet._prepare(subject)
-        );
+    static find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] | null {
+        filetypeKeys = (!filetypeKeys || filetypeKeys.length) ? filetypeKeys : Object.keys(this.indexFiles);
+        const rv: IndexEntry[] = filetypeKeys
+            .filter(type => this.indexFiles.hasOwnProperty(type))
+            .map(type => this.indexFiles[type].getEntry(
+                Wordnet._prepare(subject)
+            ))
+            .filter((word: IndexEntry) => word !== null);;
+        return rv.length === 0 ? null : filetypeKeys.length === 1 ? (rv[0] || null) : rv;
     }
 
     /**
@@ -482,14 +494,7 @@ export class Wordnet {
      * 
      * @param subject The word sought.
      */
-    static getIndexEntries(subject: string): IndexEntry[] | null {
-        return Object.keys(this.indexFiles)
-            .filter(type => this.indexFiles.hasOwnProperty(type))
-            .map(type => this.indexFiles[type].getEntry(
-                Wordnet._prepare(subject)
-            ))
-            .filter((word: IndexEntry) => word !== null);
-
+    static findAll(subject: string): IndexEntry[] | null {
+        return this.find(subject) as IndexEntry[];
     }
-
 }

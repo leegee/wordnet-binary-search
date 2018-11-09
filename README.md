@@ -6,15 +6,15 @@
 
     Wordnet.Wordnet.dataDir = 'downloaded/wordnet-db');
 
-    const importVerbIndexEntry = Wordnet.Wordnet.getIndexEntry('import', 'v');
+    const importVerbIndexEntry = Wordnet.Wordnet.find('import', 'v');
 
     const antonymOfImportVerb1 = importVerbIndexEntry['antonym'];
     const antonymOfImportVerb2 = importVerbIndexEntry.derefPointer('!');
 
-    const indexEntriesForAllFormsOfExcuse = Wordnet.Wordnet.getIndexEntries('excuse');
+    const indexEntriesForAllFormsOfExcuse = Wordnet.Wordnet.findAll('excuse');
     indexEntriesForAllFormsOfExcuse.forEach( indexEntry => {
         const senses = indexEntry.senses;
-        senses.forEach( sense => console.log(sense) );
+        senses.forEach( sense => console.log('Sense [%o], [%s]: hypernym: [%s]', sense, sense, sense.hypernym );
     });
 
 ## DESCRIPTION
