@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "author": "Lee Goddard",
   "homepage": "http://leegoddard.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com:leegee/wordnet-binary-search.git"
+  },
   "scripts": {
     "test": "mocha -r ts-node/register src/**/*.spec.ts"
   },
