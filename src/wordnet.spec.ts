@@ -134,7 +134,7 @@ describe('Wordnet', () => {
 
     describe('hypernym', () => {
         it('finds the hypernym of a verb', () => {
-            const indexEntry = Wordnet.find('fool', 'v')  as IndexEntry;
+            const indexEntry = Wordnet.find('fool', 'v') as IndexEntry;
             expect(indexEntry).to.be.an.instanceof(IndexEntry);
             expect(indexEntry.senses).to.have.length(4);
             expect(indexEntry.senses[0].word).to.equal('fool');
@@ -164,4 +164,3 @@ describe('Wordnet', () => {
         });
     });
 });
-

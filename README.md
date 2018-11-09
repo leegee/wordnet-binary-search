@@ -20,6 +20,16 @@
         });
     });
 
+    const allUniqueOppositesOfImport = Array.from(new Set(
+        Wordnet.findAll('import').map(
+            (indexEntry: IndexEntry) => indexEntry.senses.map(
+                sense => sense['antonym'] ? sense['antonym'].toString() : null
+            ).filter(s => s !== null)
+        ).reduce(
+            (call, item) => { call.push(...item); return call }
+        )
+    ))
+
 ## DESCRIPTION
 
 * binary searches upon your downloaded copies of Wordnet 3.1 "database files"
