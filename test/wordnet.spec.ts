@@ -5,10 +5,12 @@ import { expect } from 'chai';
 
 import log4js from 'log4js';
 
-const { Wordnet, IndexEntry, Sense, Pointer } = require('../dist/wordnet');
+// const { Wordnet, IndexEntry, Sense, Pointer } = require('../dist/wordnet');
+
+import { Wordnet, IndexEntry, Sense, Pointer } from '../src/wordnet';
 
 Wordnet.logger = log4js.getLogger();
-Wordnet.logger.level = 'info';
+Wordnet.logger.level = 'error';
 
 Wordnet.dataDir = path.resolve('assets/wordnet');
 
@@ -23,11 +25,11 @@ describe('Wordnet', () => {
     });
   });
 
-  describe('Index', () => {
+  describe('Verb Index', () => {
     let verbIndexEntry;
 
     before(() => {
-      verbIndexEntry = Wordnet.find('import', 'v');
+      verbIndexEntry = Wordnet.find('import', 'v')[0];
     });
 
     it('finds verb "import"', () => {
@@ -112,8 +114,12 @@ describe('Wordnet', () => {
     };
 
     it('finds the opposite of verb "import"', () => {
-      const indexEntry = Wordnet.find('import', 'v');
-      indexEntry.senses.forEach(sense => {
+      const indexEntries = Wordnet.find('import', 'v');
+
+      expect(indexEntries).to.be.an.instanceOf(Array);
+      expect(indexEntries).to.have.lengthOf(1);
+
+      indexEntries[0].senses.forEach(sense => {
         testSense(sense);
       });
     });
@@ -130,16 +136,20 @@ describe('Wordnet', () => {
 
   describe('hypernym', () => {
     it('finds the hypernym of a verb', () => {
-      const indexEntry = Wordnet.find('fool', 'v');
-      expect(indexEntry).to.be.an.instanceof(IndexEntry);
-      expect(indexEntry.senses).to.have.length(4);
-      expect(indexEntry.senses[0].word).to.equal('fool');
-      expect(indexEntry.senses[0].pCnt).to.equal(4);
-      expect(indexEntry.senses[0].pointers).to.have.length(4);
-      expect(indexEntry.senses[0].pointers[0].pos).to.equal('v');
-      expect(indexEntry.senses[0].pointers[0].synsetOffset).to.equal(2575082);
-      expect(indexEntry.senses[0].pointers[0].pointerSymbol).to.equal('@');
-      expect(indexEntry.senses[0]['hypernym'][0].word).to.equal('deceive');
+      const indexEntries = Wordnet.find('fool', 'v');
+
+      expect(indexEntries).to.be.an.instanceOf(Array);
+      expect(indexEntries).to.have.lengthOf(1);
+
+      expect(indexEntries[0]).to.be.an.instanceof(IndexEntry);
+      expect(indexEntries[0].senses).to.have.length(4);
+      expect(indexEntries[0].senses[0].word).to.equal('fool');
+      expect(indexEntries[0].senses[0].pCnt).to.equal(4);
+      expect(indexEntries[0].senses[0].pointers).to.have.length(4);
+      expect(indexEntries[0].senses[0].pointers[0].pos).to.equal('v');
+      expect(indexEntries[0].senses[0].pointers[0].synsetOffset).to.equal(2575082);
+      expect(indexEntries[0].senses[0].pointers[0].pointerSymbol).to.equal('@');
+      expect(indexEntries[0].senses[0]['hypernym'][0].word).to.equal('deceive');
     });
 
     it('finds the hypernym of a verb from all forms', () => {
@@ -151,7 +161,7 @@ describe('Wordnet', () => {
         expect(indexEntry.senses[0].word).to.have.length.greaterThan(0);
         // indexEntry.senses[0].word
         indexEntry.senses.forEach(sense => {
-          console.log('Hypernym for "fool" (sense "[%s]"): [%s]',
+          Wordnet.logger.info('Hypernym for "fool" (sense "[%s]"): [%s]',
             sense,
             sense['hypernym'][0]
           );

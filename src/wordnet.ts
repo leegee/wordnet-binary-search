@@ -120,7 +120,7 @@ class WithPointers {
     /**
      * Dereferences the entry's semantic pointers from the entry's sense definitions,
      * as identified by their `wininput(5WN)` pointer symbol.
-     * 
+     *
      * @param ptrSymbol Pointer symbol.
      * @returns Sense[]
      * @see 'Pointers' in  https://wordnet.princeton.edu/documentation/wninput5wn
@@ -215,9 +215,9 @@ export class Sense extends WithPointers {
 
     /**
      * Constructs a new `Sense` object.
-     * 
+     *
      * @param synsetOffset Numeric offset taken from the index.
-     * @param posSstype  The index/data type 
+     * @param posSstype  The index/data type
      * @return A new Sense
      */
     static fromSynsetOffset(synsetOffset: number, posSstype: string) {
@@ -228,7 +228,7 @@ export class Sense extends WithPointers {
 
     /**
      * Constructs a new `Sense` object instantiated from the supplied `Pointer`.
-     * 
+     *
      * @param ptr Pointer
      * @return A new Sense
      */
@@ -240,17 +240,17 @@ export class Sense extends WithPointers {
 
     /**
      * * Constructs a new `Sense` object.
-     * 
+     *
      * @param line A line from a `data.*` file.
      */
     static fromLine(line: string): Sense {
         const self = new Sense();
-        line = line.trimRight();
+        line = line.trimEnd();
 
         let parts = line.split(/\s*\|\s*/, 2);
         self.gloss = parts[1];
 
-        parts = line.split(' ');
+        parts = line.split(/\s+/);
 
         self.synsetOffset = Number(parts.shift());
         self.lexFilenum = Number(parts.shift());
@@ -335,7 +335,7 @@ export class DataFile extends SourceFile {
             Wordnet.logger.debug('...line now [%s]', line);
         }
 
-        line = line.substring(0, line.indexOf('\n')).trimRight();
+        line = line.substring(0, line.indexOf('\n')).trimEnd();
         Wordnet.logger.debug('RV [%s]', line);
         return line;
     }
@@ -449,7 +449,7 @@ export class Wordnet {
     };
 
     static _logger = log4js.getLogger('wordnet-binary-search');
-    
+
 
     static set logger(userSuppliedLogger) {
         this._logger = userSuppliedLogger;
@@ -465,27 +465,27 @@ export class Wordnet {
 
     /**
      * Find the index entry for a specified form a word.
-     * 
+     *
      * @param subject The word sought.
      * @param filetypeKeys? Optinal - One or more forms for which to search.
-     * @param IndexEntry[] 
+     * @returns IndexEntry[]
      * @see IndexFile#find
      */
-    static find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] | null {
+    static find(subject: string, ...filetypeKeys: string[]): IndexEntry[] | null {
         filetypeKeys = (!filetypeKeys || filetypeKeys.length) ? filetypeKeys : Object.keys(this.indexFiles);
-        const rv: IndexEntry[] = filetypeKeys
+        return filetypeKeys
             .filter(type => this.indexFiles.hasOwnProperty(type))
             .map(type => this.indexFiles[type].getEntry(
                 Wordnet._prepare(subject)
             ))
-            .filter((word: IndexEntry) => word !== null);;
-        return rv.length === 0 ? null : filetypeKeys.length === 1 ? (rv[0] || null) : rv;
+            .filter((indexEntry: IndexEntry) => indexEntry !== null);
     }
 
     /**
      * Finds index entries for all forms of a word.
-     * 
+     *
      * @param subject The word sought.
+     * @returns IndexEntry[]
      */
     static findAll(subject: string): IndexEntry[] | null {
         return this.find(subject) as IndexEntry[];

@@ -10,8 +10,14 @@
       "./node_modules/@types",
     ],
     "baseUrl": ".",
+    "lib": [
+      "es2019.string",
+    ]
   },
   "include": [
     "src"
-  ]
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+  ],
 }
