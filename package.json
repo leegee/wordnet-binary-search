@@ -8,8 +8,7 @@
     "url": "git+https://github.com:leegee/wordnet-binary-search.git"
   },
   "scripts": {
-    "test:ts": "mocha -r ts-node/register test/**/*.spec.ts",
-    "test:js": "mocha -r ts-node/register test/**/*.spec.js"
+    "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
   "main": "dist/index.js",
   "dependencies": {

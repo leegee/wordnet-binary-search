@@ -1,12 +1,9 @@
-const path = require('path');
-const fs = require('fs');
+import path from 'path';
+import fs from 'fs';
 
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-chai.use(chaiAsPromised);
-const expect = chai.expect;
+import { expect } from 'chai';
 
-const log4js = require('log4js');
+import log4js from 'log4js';
 
 const { Wordnet, IndexEntry, Sense, Pointer } = require('../dist/wordnet');
 
@@ -59,7 +56,6 @@ describe('Wordnet', () => {
     it('finds line by synset offset', async () => {
       const line = Wordnet.dataFiles.v.getLineBySynsetOffset(2346409);
       expect(line).to.equal(
-        // tslint:disable-next-line:max-line-length
         '02346409 40 v 01 export 0 009 @ 02260362 v 0000 ;c 01090446 n 0000 + 03306207 n 0102 + 01111952 n 0102 + 03306207 n 0101 + 10073634 n 0101 + 01111952 n 0101 ! 02346136 v 0101 ~ 02345856 v 0000 03 + 08 00 + 16 00 + 21 00 | sell or transfer abroad; "we export less than we import and have a negative trade balance"'
       );
     });
@@ -155,7 +151,7 @@ describe('Wordnet', () => {
         expect(indexEntry.senses[0].word).to.have.length.greaterThan(0);
         // indexEntry.senses[0].word
         indexEntry.senses.forEach(sense => {
-          console.log('Hypernum for "fool" (sense "[%s]"): [%s]',
+          console.log('Hypernym for "fool" (sense "[%s]"): [%s]',
             sense,
             sense['hypernym'][0]
           );
