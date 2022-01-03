@@ -5,9 +5,7 @@ import { expect } from 'chai';
 
 import log4js from 'log4js';
 
-// const { Wordnet, IndexEntry, Sense, Pointer } = require('../dist/wordnet');
-
-import { Wordnet, IndexEntry, Sense, Pointer } from '../src';
+import { Wordnet, IndexEntry, Sense, Pointer } from '../src/wordnet';
 
 Wordnet.logger = log4js.getLogger();
 Wordnet.logger.level = 'error';
