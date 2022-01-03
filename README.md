@@ -6,11 +6,14 @@
 
     Wordnet.dataDir = '../downloads/WordNet-3.0/dict');
 
-    const indexEntryForVerbForm = Wordnet.find('excuse', 'v');
-    const indexEntriesForAllForms1 = Wordnet.find('excuse');
-    const indexEntriesForAllForms2 = Wordnet.findAll('excuse');
+    const verb = Wordnet.findVerb('import');
+    const noun = Wordnet.findNoun('name');
+    const adj = Wordnet.findAdjective('good');
+    const adv = Wordnet.findAdverb('loudly');
 
-    indexEntriesForAllForms1.forEach(indexEntry => {
+    const indexEntriesForAllForms = Wordnet.findAll('excuse');
+
+    indexEntriesForAllForms.forEach(indexEntry => {
         indexEntry.senses.forEach(sense => {
             console.log(
                 'hypernym for sense "[%s]": [%s]',
@@ -32,13 +35,15 @@
 
 ## DESCRIPTION
 
-* binary searches upon your downloaded copies of Wordnet 3.1 "database files"
-* basic object modelling of Wordnet in Typescript
-* automatic, lazy-loaded  dereferencing of word senses and semantic pointers
+- binary searches upon your downloaded copies of Wordnet 3.1 "database files"
+- basic object modelling of Wordnet in Typescript
+- automatic, lazy-loaded dereferencing of word senses and semantic pointers
 
 ## TODO
 
 Lots, probably - it currently does what I want.
+
+The typescript modelling is very limited atm.
 
 The specs do not say if there can be more than one pointer of each type,
 so currently multiple are supported. This may change.
@@ -49,7 +54,7 @@ Pointers follow the Wordnet format, and are stored in `WithPointers.pointerMapEn
 
 ```ecma
     console.log(WithPointers.pointerMapEngToSymbol);
-    
+
     {
         n: { // The pointer_symbols for nouns:
             antonym: '!',

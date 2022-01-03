@@ -463,31 +463,50 @@ export class Wordnet {
         return subject.toLocaleLowerCase().replace(/\s+/, '_');
     }
 
-    /**
-     * Find the index entry for a specified form a word.
-     *
-     * @param subject The word sought.
-     * @param filetypeKeys? Optinal - One or more forms for which to search.
-     * @returns IndexEntry[]
-     * @see IndexFile#find
-     */
-    static find(subject: string, ...filetypeKeys: string[]): IndexEntry[] | null {
+    static _find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] {
         filetypeKeys = (!filetypeKeys || filetypeKeys.length) ? filetypeKeys : Object.keys(this.indexFiles);
-        return filetypeKeys
+        const rv = filetypeKeys
             .filter(type => this.indexFiles.hasOwnProperty(type))
             .map(type => this.indexFiles[type].getEntry(
                 Wordnet._prepare(subject)
             ))
             .filter((indexEntry: IndexEntry) => indexEntry !== null);
+
+        return filetypeKeys.length === 1 ? rv[0] : rv;
+    }
+
+    /**
+     * Find the index entry for one or more specified forms of a word.
+     *
+     * @param subject The word sought.
+     * @param filetypeKeys? Optinal - One or more forms for which to search.
+     */
+    static find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] {
+        return this._find(subject, ...filetypeKeys);
     }
 
     /**
      * Finds index entries for all forms of a word.
      *
      * @param subject The word sought.
-     * @returns IndexEntry[]
      */
-    static findAll(subject: string): IndexEntry[] | null {
-        return this.find(subject) as IndexEntry[];
+    static findAll(subject: string): IndexEntry[] {
+        return this._find(subject) as IndexEntry[];
+    }
+
+    static findVerb(subject: string): IndexEntry {
+        return this._find(subject, 'v') as IndexEntry;
+    }
+
+    static findNoun(subject: string): IndexEntry {
+        return this._find(subject, 'n') as IndexEntry;
+    }
+
+    static findAdjective(subject: string): IndexEntry {
+        return this._find(subject, 'r') as IndexEntry;
+    }
+
+    static findAdverb(subject: string): IndexEntry {
+        return this._find(subject, 'a') as IndexEntry;
     }
 }
