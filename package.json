@@ -1,6 +1,6 @@
 {
   "name": "wordnet-binary-search",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Lee Goddard",
   "homepage": "http://lee.goddards.space",
   "repository": {
@@ -12,8 +12,8 @@
     "build": "tsc",
     "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
-  "main": "dist/index",
-  "typings": "dist/index",
+  "main": "dist/wordnet",
+  "typings": "dist/wordnet",
   "dependencies": {
     "@log4js-node/log4js-api": "^1.0.2"
   },
