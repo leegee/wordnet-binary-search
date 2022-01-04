@@ -1,5 +1,6 @@
 import fs from 'fs';
 import * as log4js from '@log4js-node/log4js-api';
+import path from 'path';
 
 /**
  * @see https://wordnet.princeton.edu/documentation/wninput5wn
@@ -438,19 +439,19 @@ export class Wordnet {
 
     static get indexFiles(): { [key: string]: IndexFile } {
         return {
-            r: new IndexFile('adj', 'r', Wordnet.dataDir + '/index.adj'),
-            a: new IndexFile('adv', 'a', Wordnet.dataDir + '/index.adv'),
-            n: new IndexFile('noun', 'n', Wordnet.dataDir + '/index.noun'),
-            v: new IndexFile('verb', 'v', Wordnet.dataDir + '/index.verb')
+            r: new IndexFile('adj', 'r', path.resolve(Wordnet.dataDir + '/index.adj')),
+            a: new IndexFile('adv', 'a', path.resolve(Wordnet.dataDir + '/index.adv')),
+            n: new IndexFile('noun', 'n', path.resolve(Wordnet.dataDir + '/index.noun')),
+            v: new IndexFile('verb', 'v', path.resolve(Wordnet.dataDir + '/index.verb'))
         }
     };
 
     static get dataFiles(): { [key: string]: DataFile } {
         return {
-            r: new DataFile('adj', 'r', Wordnet.dataDir + '/data.adj'),
-            a: new DataFile('adv', 'a', Wordnet.dataDir + '/data.adv'),
-            n: new DataFile('noun', 'n', Wordnet.dataDir + '/data.noun'),
-            v: new DataFile('verb', 'v', Wordnet.dataDir + '/data.verb')
+            r: new DataFile('adj', 'r', path.resolve(Wordnet.dataDir + '/data.adj')),
+            a: new DataFile('adv', 'a', path.resolve(Wordnet.dataDir + '/data.adv')),
+            n: new DataFile('noun', 'n', path.resolve(Wordnet.dataDir + '/data.noun')),
+            v: new DataFile('verb', 'v', path.resolve(Wordnet.dataDir + '/data.verb'))
         }
     };
 
