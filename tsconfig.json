@@ -12,6 +12,7 @@
     "baseUrl": ".",
     "lib": [
       "es2019.string",
+      "esnext"
     ]
   },
   "include": [

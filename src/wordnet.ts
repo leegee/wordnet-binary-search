@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import * as log4js from '@log4js-node/log4js-api';
 
 /**
@@ -23,8 +23,8 @@ export class Pointer {
         this.pointerSymbol = pointerSymbol;
         this.synsetOffset = synsetOffset;
         this.pos = pos;
-        this.source = sourceTarget.substr(0, 2);
-        this.target = sourceTarget.substr(2, 2);
+        this.source = sourceTarget.substring(0, 2);
+        this.target = sourceTarget.substring(2, 2);
     }
 
     static fromLineFields(pCnt: number, parts: string[]): Pointer[] {
