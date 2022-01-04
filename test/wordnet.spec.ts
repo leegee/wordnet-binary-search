@@ -10,7 +10,7 @@ import { Wordnet, IndexEntry, Sense, Pointer } from '../src/wordnet';
 Wordnet.logger = log4js.getLogger();
 Wordnet.logger.level = 'error';
 
-Wordnet.dataDir = path.resolve('assets/wordnet');
+Wordnet.setDataDir(path.resolve('assets/wordnet'));
 
 describe('Wordnet', () => {
 
@@ -34,7 +34,7 @@ describe('Wordnet', () => {
       expect(verbIndexEntry).to.be.an.instanceof(IndexEntry);
       expect(verbIndexEntry.word).to.equal('import');
       expect(verbIndexEntry.pos).to.equal('v');
-      expect(verbIndexEntry.pointers).to.deep.equal('! @ ~ + ;'.split(' '));
+      expect(verbIndexEntry.pointerSymbolStrings).to.deep.equal('! @ ~ + ;'.split(' '));
       expect(verbIndexEntry.tagsenseCnt).to.equal(1);
       expect(verbIndexEntry.synsetOffsets).to.deep.equal(
         '02346136 02232722 00932636'.split(' ').map(i => Number(i))
@@ -64,7 +64,7 @@ describe('Wordnet', () => {
   describe('Sense', () => {
     it('from line found by synset offset', async () => {
       const line = Wordnet.dataFiles.v.getLineBySynsetOffset(2346409);
-      const sense = Sense.fromLine(line);
+      const sense = new Sense(line);
       expect(sense).to.be.an.instanceof(Sense);
       expect(sense.word).to.equal('export');
       expect(sense.synsetOffset).to.equal(2346409);
@@ -102,8 +102,9 @@ describe('Wordnet', () => {
 
   describe('antonyms', () => {
     const testSense = (sense) => {
-      const antonym = sense['antonym'];
-      if (antonym !== null) {
+      const antonym = sense.antonym;
+
+      if (antonym.length > 0) {
         expect(antonym).to.be.an.instanceof(Array);
         expect(antonym[0]).to.be.an.instanceof(Sense);
         expect(antonym[0].word).to.be.a('string');

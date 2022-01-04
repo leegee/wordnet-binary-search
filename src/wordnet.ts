@@ -4,8 +4,68 @@ import * as log4js from '@log4js-node/log4js-api';
 /**
  * @see https://wordnet.princeton.edu/documentation/wninput5wn
  * @see https://wordnet.princeton.edu/documentation/wndb5wn
-
  */
+
+const DEREFD_POINTERS: { [key: string]: Sense[] } = {};
+
+/**
+ * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
+ * Second-level is keyed by phrase taken from then `wninput(WN5)` document.
+ */
+const POINTER_MAP_ENG2SYM: { [key: string]: { [key: string]: string } } = {
+    n: { // The pointer_symbols for nouns:
+        antonym: '!',
+        hypernym: '@',
+        instanceHypernym: '@i',
+        hypnym: '~',
+        instanceHyponym: '~i',
+        memberHolonym: '#m',
+        substanceHolonym: '#s',
+        partHolonym: '#p',
+        memberMeronym: '%m',
+        substanceMeronym: '%s',
+        partMeronym: '%p',
+        attribute: '=',
+        derivationallyRelatedForm: '+',
+        domainofSynsetTopic: ';c',
+        memberofThisDomainTopic: '-c',
+        domainofSynsetRegion: ';r',
+        memberofThisDomainRegion: '-r',
+        domainofSynsetUsage: ';u',
+        memberofThisDomainUsage: '-u'
+    },
+    v: { // The pointer_symbols for verbs:
+        antonym: '!',
+        hypernym: '@',
+        hypnym: '~',
+        entailment: '*',
+        cause: '>',
+        alsoSee: '^',
+        verbGroup: '$',
+        derivationallyRelatedForm: '+',
+        domainofSynsetTopic: ';c',
+        domainofSynsetRegion: ';r',
+        domainofSynsetUsage: ';u'
+    },
+    r: { // The pointer_symbols for adjectives:
+        antonym: '!',
+        similarTo: '&',
+        participleOfVerb: '<',
+        pertainym: '\\',
+        attribute: '=',
+        alsoSee: '^',
+        domainofSynsetTopic: ';c',
+        domainofSynsetRegion: ';r',
+        domainofSynsetUsage: ';u'
+    },
+    a: {// The pointer_symbols for adverbs are:
+        antonym: '!',
+        derivedFromAdjective: '\\',
+        domainofSynsetTopic: ';c',
+        domainofSynsetRegion: ';r',
+        domainofSynsetUsage: ';u'
+    }
+};
 
 export class Pointer {
     pointerSymbol: string;
@@ -32,10 +92,10 @@ export class Pointer {
         for (let i = 1; i <= pCnt; i++) {
             ptrs.push(
                 new Pointer(
-                    parts.shift(),
+                    parts.shift() as string,
                     Number(parts.shift()),
-                    parts.shift(),
-                    parts.shift()
+                    parts.shift() as string,
+                    parts.shift() as string
                 )
             );
         }
@@ -44,74 +104,17 @@ export class Pointer {
 }
 
 class WithPointers {
-    /**
-     * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
-     * Second-level is keyed by phrase taken from then `wninput(WN5)` document.
-     */
-    static pointerMapEngToSymbol: { [key: string]: { [key: string]: string } } = {
-        n: { // The pointer_symbols for nouns:
-            antonym: '!',
-            hypernym: '@',
-            instanceHypernym: '@i',
-            hypnym: '~',
-            instanceHyponym: '~i',
-            memberHolonym: '#m',
-            substanceHolonym: '#s',
-            partHolonym: '#p',
-            memberMeronym: '%m',
-            substanceMeronym: '%s',
-            partMeronym: '%p',
-            attribute: '=',
-            derivationallyRelatedForm: '+',
-            domainofSynsetTopic: ';c',
-            memberofThisDomainTopic: '-c',
-            domainofSynsetRegion: ';r',
-            memberofThisDomainRegion: '-r',
-            domainofSynsetUsage: ';u',
-            memberofThisDomainUsage: '-u'
-        },
-        v: { // The pointer_symbols for verbs:
-            antonym: '!',
-            hypernym: '@',
-            hypnym: '~',
-            entailment: '*',
-            cause: '>',
-            alsoSee: '^',
-            verbGroup: '$',
-            derivationallyRelatedForm: '+',
-            domainofSynsetTopic: ';c',
-            domainofSynsetRegion: ';r',
-            domainofSynsetUsage: ';u'
-        },
-        r: { // The pointer_symbols for adjectives:
-            antonym: '!',
-            similarTo: '&',
-            participleOfVerb: '<',
-            pertainym: '\\',
-            attribute: '=',
-            alsoSee: '^',
-            domainofSynsetTopic: ';c',
-            domainofSynsetRegion: ';r',
-            domainofSynsetUsage: ';u'
-        },
-        a: {// The pointer_symbols for adverbs are:
-            antonym: '!',
-            derivedFromAdjective: '\\',
-            domainofSynsetTopic: ';c',
-            domainofSynsetRegion: ';r',
-            domainofSynsetUsage: ';u'
-        }
-    };
-
-    _derefedPointer: { [key: string]: Sense[] } = {};
     synsetOffsets: number[] = [];
+    pos!: string;
+    ssType!: string;
+    pointers!: Pointer[];
 
     addPointerAccessors() {
-        const ssTypePos = this['pos'] || this['ssType'];
-        Object.keys(WithPointers.pointerMapEngToSymbol[ssTypePos]).forEach(englishKey => {
+        const ssTypePos = this.pos || this.ssType;
+        Object.keys(POINTER_MAP_ENG2SYM[ssTypePos]).forEach(englishKey => {
             Object.defineProperty(this, englishKey, {
                 get: () => this.derefPointer(
-                    WithPointers.pointerMapEngToSymbol[ssTypePos][englishKey]
+                    POINTER_MAP_ENG2SYM[ssTypePos][englishKey]
                 )
             });
         });
@@ -126,16 +129,19 @@ class WithPointers {
      * @see 'Pointers' in  https://wordnet.princeton.edu/documentation/wninput5wn
      */
     derefPointer(ptrSymbol: string): Sense[] {
-        if (!this._derefedPointer[ptrSymbol]) {
-            this._derefedPointer[ptrSymbol] = [];
-            const pointers = this.hasOwnProperty('senses') ? this['senses'].map(sense => sense.pointers) : this['pointers'];
+        if (!DEREFD_POINTERS[ptrSymbol]) {
+            DEREFD_POINTERS[ptrSymbol] = [];
+
+            // const pointers = this.hasOwnProperty('senses') ? this['senses'].map(sense => sense.pointers) : this['pointers'];
+            const pointers = this.pointers;
+
             pointers.filter(ptr => ptr.pointerSymbol === ptrSymbol).forEach(ptr => {
-                this._derefedPointer[ptrSymbol].push(
+                DEREFD_POINTERS[ptrSymbol].push(
                     Sense.fromPointer(ptr)
                 );
             });
         }
-        return this._derefedPointer[ptrSymbol].length ? this._derefedPointer[ptrSymbol] : null;
+        return DEREFD_POINTERS[ptrSymbol].length ? DEREFD_POINTERS[ptrSymbol] : [];
     }
 }
 
@@ -149,7 +155,7 @@ export class IndexEntry extends WithPointers {
     pos: string; // pos
     synsetCnt: number;
     pCnt: number;
-    pointers: string[] = [];
+    pointerSymbolStrings: string[] = [];
     tagsenseCnt: number;
     synsetOffsets: number[] = [];
     _senses: Sense[] = [];
@@ -161,15 +167,14 @@ export class IndexEntry extends WithPointers {
     constructor(line: string) {
         super();
         const parts = line.trim().split(/\s+/);
-        this.word = parts.shift();
-        this.pos = parts.shift();
+        this.word = parts.shift() as string;
+        this.pos = parts.shift() as string;
         this.synsetCnt = Number(parts.shift());
 
         this.pCnt = Number(parts.shift());
         for (let i = 0; i < this.pCnt; i++) {
-            this.pointers.push(parts.shift());
+            this.pointerSymbolStrings.push(parts.shift() as string);
         }
-        // this.pointers = Pointer._fromLineFields(this.pCnt, parts)
 
         parts.shift();  // sense_cnt same as synset count: senses are at EOL
 
@@ -202,26 +207,26 @@ export class IndexEntry extends WithPointers {
 
 // synset_offset  lex_filenum  ss_type  w_cnt  word  lex_id  [word  lex_id...]  p_cnt  [ptr...]  [frames...]  |   gloss
 export class Sense extends WithPointers {
-    synsetOffset: number;
-    lexFilenum: number;
+    synsetOffset!: number;
+    lexFilenum!: number;
     ssType: string; // aka pos
     wCnt: number;
-    word: string;
-    lexId: string; // 1-digit hex
-    pCnt: number; // 3-digit decimal
-    pointers: Pointer[];
-    franes: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
-    gloss: string;
+    word!: string;
+    lexId!: string; // 1-digit hex
+    pCnt!: number; // 3-digit decimal
+    pointers!: Pointer[];
+    franes!: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
+    gloss!: string;
 
     /**
-     * Constructs a new `Sense` object.
+     * Constructs a new `Sense` object from a sysnetOffset.
      *
      * @param synsetOffset Numeric offset taken from the index.
      * @param posSstype  The index/data type
      * @return A new Sense
      */
     static fromSynsetOffset(synsetOffset: number, posSstype: string) {
-        return Sense.fromLine(
+        return new Sense(
             Wordnet.dataFiles[posSstype].getLineBySynsetOffset(synsetOffset)
         );
     }
@@ -233,7 +238,7 @@ export class Sense extends WithPointers {
      * @return A new Sense
      */
     static fromPointer(ptr: Pointer): Sense {
-        return Sense.fromLine(
+        return new Sense(
             Wordnet.dataFiles[ptr.pos].getLineBySynsetOffset(ptr.synsetOffset)
         );
     }
@@ -243,21 +248,22 @@ export class Sense extends WithPointers {
      *
      * @param line A line from a `data.*` file.
      */
-    static fromLine(line: string): Sense {
-        const self = new Sense();
+    constructor(line: string) {
+        super();
+
         line = line.trimEnd();
 
         let parts = line.split(/\s*\|\s*/, 2);
-        self.gloss = parts[1];
+        this.gloss = parts[1];
 
         parts = line.split(/\s+/);
 
-        self.synsetOffset = Number(parts.shift());
-        self.lexFilenum = Number(parts.shift());
-        self.ssType = parts.shift();
-        self.wCnt = Number(parts.shift());
-        self.word = parts.shift();
-        self.lexId = parts.shift();
+        this.synsetOffset = Number(parts.shift());
+        this.lexFilenum = Number(parts.shift());
+        this.ssType = parts.shift() as string;
+        this.wCnt = Number(parts.shift());
+        this.word = parts.shift() as string;
+        this.lexId = parts.shift() as string;
 
         // Remove (or do what with?) additional word/lexId pairs:
         // iterate whilst next part is not a pCnt 3-digit decimal integer:
@@ -267,14 +273,14 @@ export class Sense extends WithPointers {
         }
 
         const pCnt = parts.shift();
-        self.pCnt = Number(pCnt);
-        if (isNaN(self.pCnt)) {
-            throw new Error('pCnt NaN:' + pCnt + '\n' + line + '\nword=' + self.word);
+        this.pCnt = Number(pCnt);
+        if (isNaN(this.pCnt)) {
+            throw new Error('pCnt NaN:' + pCnt + '\n' + line + '\nword=' + this.word);
         }
 
-        self.pointers = Pointer.fromLineFields(self.pCnt, parts);
-        self.addPointerAccessors();
-        return self;
+        this.pointers = Pointer.fromLineFields(this.pCnt, parts);
+        this.addPointerAccessors();
+        return this;
     }
 
     toString(): string {
@@ -426,7 +432,7 @@ export class IndexFile extends SourceFile {
     }
 }
 
-// tslint:disable-next-line:no-shadowed-variable
+
 export class Wordnet {
     static dataDir: string;
 
@@ -450,7 +456,6 @@ export class Wordnet {
 
     static _logger = log4js.getLogger('wordnet-binary-search');
 
-
     static set logger(userSuppliedLogger) {
         this._logger = userSuppliedLogger;
     }
@@ -463,14 +468,23 @@ export class Wordnet {
         return subject.toLocaleLowerCase().replace(/\s+/, '_');
     }
 
+    static setDataDir(path: string) {
+        if (!fs.existsSync(path)) {
+            throw new Error(`The supplied path does not exist ('${path}').`);
+        }
+        this.dataDir = path;
+    }
+
     static _find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] {
         filetypeKeys = (!filetypeKeys || filetypeKeys.length) ? filetypeKeys : Object.keys(this.indexFiles);
-        const rv = filetypeKeys
+
+        // @ts-ignore because the final filter removes the null values
+        const rv: IndexEntry[] = filetypeKeys
             .filter(type => this.indexFiles.hasOwnProperty(type))
             .map(type => this.indexFiles[type].getEntry(
                 Wordnet._prepare(subject)
             ))
-            .filter((indexEntry: IndexEntry) => indexEntry !== null);
+            .filter((indexEntry: IndexEntry | null) => indexEntry !== null);
 
         return filetypeKeys.length === 1 ? rv[0] : rv;
     }
