@@ -216,8 +216,35 @@ export class Sense extends WithPointers {
     lexId!: string; // 1-digit hex
     pCnt!: number; // 3-digit decimal
     pointers!: Pointer[];
-    franes!: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
+    franes?: string; // TODO: see 'Verb Frames' in https://wordnet.princeton.edu/documentation/wninput5wn
     gloss!: string;
+    hypernym?: Sense[];
+    antonym?: Sense[];
+    instanceHypernym?: Sense[];
+    hypnym?: Sense[];
+    instanceHyponym?: Sense[];
+    memberHolonym?: Sense[];
+    substanceHolonym?: Sense[];
+    partHolonym?: Sense[];
+    memberMeronym?: Sense[];
+    substanceMeronym?: Sense[];
+    partMeronym?: Sense[];
+    attribute?: Sense[];
+    derivationallyRelatedForm?: Sense[];
+    domainofSynsetTopic?: Sense[];
+    memberofThisDomainTopic?: Sense[];
+    domainofSynsetRegion?: Sense[];
+    memberofThisDomainRegion?: Sense[];
+    domainofSynsetUsage?: Sense[];
+    memberofThisDomainUsage?: Sense[];
+    entailment?: Sense[];
+    cause?: Sense[];
+    alsoSee?: Sense[];
+    verbGroup?: Sense[];
+    similarTo?: Sense[];
+    participleOfVerb?: Sense[];
+    pertainym?: Sense[];
+    derivedFromAdjective?: Sense[];
 
     /**
      * Constructs a new `Sense` object from a sysnetOffset.
@@ -370,7 +397,7 @@ export class IndexFile extends SourceFile {
 
     /*
      * Binary search.
-
+  
      * @param subject The subject of the search.
      * @param inputBuffer Preallocated input buffer.
      * @param pos Current position within the intput file.

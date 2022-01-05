@@ -13,7 +13,6 @@ Wordnet.logger.level = 'error';
 Wordnet.setDataDir(path.resolve('assets/wordnet'));
 
 describe('Wordnet', () => {
-
   it('inits data file paths', () => {
     Object.keys(Wordnet.dataFiles).forEach(filetypeKey => {
       expect(
@@ -140,13 +139,14 @@ describe('Wordnet', () => {
 
       expect(indexEntry).to.be.an.instanceof(IndexEntry);
       expect(indexEntry.senses).to.have.length(4);
+      expect(indexEntry.senses[0]).to.be.an.instanceOf(Sense);
       expect(indexEntry.senses[0].word).to.equal('fool');
       expect(indexEntry.senses[0].pCnt).to.equal(4);
       expect(indexEntry.senses[0].pointers).to.have.length(4);
       expect(indexEntry.senses[0].pointers[0].pos).to.equal('v');
       expect(indexEntry.senses[0].pointers[0].synsetOffset).to.equal(2575082);
       expect(indexEntry.senses[0].pointers[0].pointerSymbol).to.equal('@');
-      expect(indexEntry.senses[0]['hypernym'][0].word).to.equal('deceive');
+      expect(indexEntry.senses[0].hypernym[0].word).to.equal('deceive');
     });
 
     it('finds the hypernym of a verb from all forms', () => {
@@ -155,6 +155,7 @@ describe('Wordnet', () => {
       indexEntries.forEach(indexEntry => {
         expect(indexEntry).to.be.an.instanceof(IndexEntry);
         expect(indexEntry.senses).to.have.length.greaterThan(0);
+        expect(indexEntry.senses[0]).to.be.an.instanceOf(Sense);
         expect(indexEntry.senses[0].word).to.have.length.greaterThan(0);
         // indexEntry.senses[0].word
         indexEntry.senses.forEach(sense => {
