@@ -31,13 +31,16 @@ describe('Wordnet', () => {
 
     it('finds verb "import"', () => {
       expect(verbIndexEntry).to.be.an.instanceof(IndexEntry);
-      expect(verbIndexEntry.word).to.equal('import');
-      expect(verbIndexEntry.pos).to.equal('v');
-      expect(verbIndexEntry.pointerSymbolStrings).to.deep.equal('! @ ~ + ;'.split(' '));
-      expect(verbIndexEntry.tagsenseCnt).to.equal(1);
-      expect(verbIndexEntry.synsetOffsets).to.deep.equal(
-        '02346136 02232722 00932636'.split(' ').map(i => Number(i))
-      );
+      expect(verbIndexEntry).to.deep.equal({
+        synsetOffsets: [2346136, 2232722, 932636],
+        pointerSymbolStrings: ['!', '@', '~', '+', ';'],
+        _senses: [],
+        word: 'import',
+        pos: 'v',
+        synsetCnt: 3,
+        pCnt: 5,
+        tagsenseCnt: 1
+      });
     });
 
     it('loads all entries for "import"', () => {
