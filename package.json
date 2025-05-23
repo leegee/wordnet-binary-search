@@ -12,6 +12,7 @@
     "build": "tsc",
     "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
+  "type": "module",
   "main": "dist/wordnet",
   "typings": "dist/wordnet",
   "dependencies": {
@@ -22,7 +23,6 @@
     "@types/mocha": "^5.2.7",
     "@types/node": "^16.11.18",
     "chai": "^4.2.0",
-    "log4js": "^6.9.1",
     "mocha": "^11.4.0",
     "rimraf": "^3.0.2",
     "ts-node": "~7.0.0",
@@ -55,7 +55,7 @@
       "@typescript-eslint/interface-name-prefix": "off",
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-explicit-any": "on",
+      "@typescript-eslint/no-explicit-any": 1,
       "@typescript-eslint/space-in-parens": [
         1,
         "always"
