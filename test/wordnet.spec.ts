@@ -3,7 +3,7 @@ import fs from 'fs';
 
 import { expect } from 'chai';
 
-import log4js from 'log4js';
+import log4js from '@log4js-node/log4js-api';
 
 import { Wordnet, IndexEntry, Sense, Pointer } from '../src/wordnet';
 
@@ -35,6 +35,7 @@ describe('Wordnet', () => {
         synsetOffsets: [2346136, 2232722, 932636],
         pointerSymbolStrings: ['!', '@', '~', '+', ';'],
         _senses: [],
+        derefCache: {},
         word: 'import',
         pos: 'v',
         synsetCnt: 3,
@@ -149,7 +150,8 @@ describe('Wordnet', () => {
       expect(indexEntry.senses[0].pointers[0].pos).to.equal('v');
       expect(indexEntry.senses[0].pointers[0].synsetOffset).to.equal(2575082);
       expect(indexEntry.senses[0].pointers[0].pointerSymbol).to.equal('@');
-      expect(indexEntry.senses[0].hypernym[0].word).to.equal('deceive');
+      expect(indexEntry.senses[0].hypernym).to.be.an('array').that.is.not.empty;
+      expect(indexEntry.senses[0].hypernym![0].word).to.equal('deceive');
     });
 
     it('finds the hypernym of a verb from all forms', () => {
@@ -164,7 +166,7 @@ describe('Wordnet', () => {
         indexEntry.senses.forEach(sense => {
           Wordnet.logger.info('Hypernym for "fool" (sense "[%s]"): [%s]',
             sense,
-            sense['hypernym'][0]
+            sense.hypernym?.[0] ?? 'undefined'
           );
         });
       });
