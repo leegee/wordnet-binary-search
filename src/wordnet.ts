@@ -7,7 +7,7 @@ import path from 'path';
  * @see https://wordnet.princeton.edu/documentation/wndb5wn
  */
 
-const DEREFD_POINTERS: { [key: string]: Sense[] } = {};
+const RE_INPUT_STR = /\n(([a-z_-]+)(.+?))\s*\n/;
 
 /**
  * First-level is keyed by the word form -- what Wordnet calls  `pos` or `ssType`.
@@ -85,7 +85,7 @@ export class Pointer {
         this.synsetOffset = synsetOffset;
         this.pos = pos;
         this.source = sourceTarget.substring(0, 2);
-        this.target = sourceTarget.substring(2, 2);
+        this.target = sourceTarget.substring(2); // (2,2)
     }
 
     static fromLineFields(pCnt: number, parts: string[]): Pointer[] {
@@ -105,6 +105,7 @@ export class Pointer {
 }
 
 class WithPointers {
+    private derefCache: { [key: string]: Sense[] } = {};
     synsetOffsets: number[] = [];
     pos!: string;
     ssType!: string;
@@ -130,19 +131,15 @@ class WithPointers {
      * @see 'Pointers' in  https://wordnet.princeton.edu/documentation/wninput5wn
      */
     derefPointer(ptrSymbol: string): Sense[] {
-        if (!DEREFD_POINTERS[ptrSymbol]) {
-            DEREFD_POINTERS[ptrSymbol] = [];
+        if (!this.derefCache[ptrSymbol]) {
+            this.derefCache[ptrSymbol] = [];
 
-            // const pointers = this.hasOwnProperty('senses') ? this['senses'].map(sense => sense.pointers) : this['pointers'];
             const pointers = this.pointers;
-
             pointers.filter(ptr => ptr.pointerSymbol === ptrSymbol).forEach(ptr => {
-                DEREFD_POINTERS[ptrSymbol].push(
-                    Sense.fromPointer(ptr)
-                );
+                this.derefCache[ptrSymbol].push(Sense.fromPointer(ptr));
             });
         }
-        return DEREFD_POINTERS[ptrSymbol].length ? DEREFD_POINTERS[ptrSymbol] : [];
+        return this.derefCache[ptrSymbol].length ? this.derefCache[ptrSymbol] : [];
     }
 }
 
@@ -414,7 +411,7 @@ export class IndexFile extends SourceFile {
         Wordnet.logger.debug('\nFor [%s] Read from %d / %d:\n%s\n', subject, pos, totalLength, inputBuffer);
 
         const inputStr = inputBuffer.toString();
-        const m = inputStr.match(/\n(([a-z_-]+)(.+?))\s*\n/);
+        const m = inputStr.match(RE_INPUT_STR);
 
         if (!m) {
             IndexFile.INPUT_BUFFER_READ_LINE_SIZE = Math.floor(IndexFile.INPUT_BUFFER_READ_LINE_SIZE * 1.5);
@@ -464,6 +461,7 @@ export class IndexFile extends SourceFile {
 export class Wordnet {
     static dataDir: string;
 
+    // todo cache?
     static get indexFiles(): { [key: string]: IndexFile } {
         return {
             r: new IndexFile('adj', 'r', path.resolve(Wordnet.dataDir + '/index.adj')),
@@ -473,6 +471,7 @@ export class Wordnet {
         }
     };
 
+    // todo cache?
     static get dataFiles(): { [key: string]: DataFile } {
         return {
             r: new DataFile('adj', 'r', path.resolve(Wordnet.dataDir + '/data.adj')),
@@ -504,9 +503,10 @@ export class Wordnet {
     }
 
     static _find(subject: string, ...filetypeKeys: string[]): IndexEntry | IndexEntry[] {
-        filetypeKeys = (!filetypeKeys || filetypeKeys.length) ? filetypeKeys : Object.keys(this.indexFiles);
+        if (!filetypeKeys || filetypeKeys.length === 0) {
+            filetypeKeys = Object.keys(this.indexFiles);
+        }
 
-        // @ts-ignore because the final filter removes the null values
         const rv: IndexEntry[] = filetypeKeys
             .filter(type => this.indexFiles.hasOwnProperty(type))
             .map(type => this.indexFiles[type].getEntry(
