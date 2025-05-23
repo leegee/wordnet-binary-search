@@ -4,7 +4,7 @@
 
     import { Wordnet } from 'wordnet-binary-search';
 
-    Wordnet.dataDir = '../downloads/WordNet-3.0/dict');
+    Wordnet.dataDir = '../downloads/WordNet-3.0/dict';
 
     const verb = Wordnet.findVerb('import');
     const noun = Wordnet.findNoun('name');
@@ -33,6 +33,11 @@
         )
     ))
 
+## INSTALL
+
+    npm build
+    npm test
+
 ## DESCRIPTION
 
 - binary searches upon your [downloaded](https://wordnet.princeton.edu/download/current-version) copies of Wordnet 3.1 "database files"
@@ -43,7 +48,7 @@
 
 Lots, probably - it currently does what I want.
 
-The typescript modelling is very limited atm.
+The typescript modelling is rather limited at present.
 
 The specs do not say if there can be more than one pointer of each type,
 so currently multiple are supported. This may change.
