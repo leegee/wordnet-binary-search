@@ -17,8 +17,7 @@
     "allowJs": true
   },
   "include": [
-    "src",
-    "eg"
+    "src"
   ],
   "exclude": [
     "**/*.spec.ts"
