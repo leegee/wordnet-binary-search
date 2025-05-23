@@ -11,8 +11,9 @@ const indexEntriesForAllForms = Wordnet.findAll('excuse');
 
 indexEntriesForAllForms.forEach(indexEntry => {
     indexEntry.senses.forEach(sense => {
-        if (sense.hypernym && sense.hypernym.length > 0) {
-            console.log('hypernym for sense [%s]: [%s]', sense, sense.hypernym[0].word);
+        const firstHypernymWord = sense.hypernym?.[0]?.word;
+        if (firstHypernymWord) {
+            console.log('hypernym for sense [%s]: [%s]', sense, firstHypernymWord);
         } else {
             console.log('No hypernym for sense [%s]', sense);
         }
