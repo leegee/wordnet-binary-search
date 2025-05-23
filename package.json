@@ -10,7 +10,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "test": "mocha --loader ts-node/esm test/**/*.spec.ts",
+    "test": "mocha --require ts-node/register test/wordnet.spec.ts",
     "download": "mkdir -p downloads && curl -L https://wordnetcode.princeton.edu/wn3.1.dict.tar.gz | tar -xz -C downloads"
   },
   "main": "dist/wordnet",
