@@ -35,7 +35,7 @@
 
 ## DESCRIPTION
 
-- binary searches upon your downloaded copies of Wordnet 3.1 "database files"
+- binary searches upon your [downloaded](https://wordnet.princeton.edu/download/current-version) copies of Wordnet 3.1 "database files"
 - basic object modelling of Wordnet in Typescript
 - automatic, lazy-loaded dereferencing of word senses and semantic pointers
 
