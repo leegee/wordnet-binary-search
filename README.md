@@ -11,32 +11,12 @@
     const adj = Wordnet.findAdjective('good');
     const adv = Wordnet.findAdverb('loudly');
 
-    const indexEntriesForAllForms = Wordnet.findAll('excuse');
-
-    indexEntriesForAllForms.forEach(indexEntry => {
-        indexEntry.senses.forEach(sense => {
-            console.log(
-                'hypernym for sense "[%s]": [%s]',
-                sense,
-                sense['hypernym'][0]
-            );
-        });
-    });
-
-    const allUniqueOppositesOfImport = Array.from(new Set(
-        Wordnet.findAll('import').map(
-            (indexEntry: IndexEntry) => indexEntry.senses.map(
-                sense => sense['antonym'] ? sense['antonym'].toString() : null
-            ).filter(s => s !== null)
-        ).reduce(
-            (call, item) => { call.push(...item); return call }
-        )
-    ))
-
 ## INSTALL
 
+    npm run download # Download and unpack the WordNet files into ./downloads/dict
     npm build
     npm test
+    node eg/eg.js
 
 ## DESCRIPTION
 
