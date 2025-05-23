@@ -10,10 +10,9 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "test": "mocha -r ts-node/register test/**/*.spec.ts",
+    "test": "mocha --loader ts-node/esm test/**/*.spec.ts",
     "download": "mkdir -p downloads && curl -L https://wordnetcode.princeton.edu/wn3.1.dict.tar.gz | tar -xz -C downloads"
   },
-  "type": "module",
   "main": "dist/wordnet",
   "typings": "dist/wordnet",
   "dependencies": {
@@ -24,9 +23,10 @@
     "@types/mocha": "^5.2.7",
     "@types/node": "^22.15.21",
     "chai": "^4.2.0",
+    "glob": "^11.0.2",
     "mocha": "^11.4.0",
     "rimraf": "^3.0.2",
-    "ts-node": "~7.0.0",
+    "ts-node": "^10.9.2",
     "tslint": "~5.11.0",
     "typescript": "^5.8.3"
   },

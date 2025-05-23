@@ -1,5 +1,5 @@
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
 
 import { expect } from 'chai';
 
@@ -23,7 +23,7 @@ describe('Wordnet', () => {
   });
 
   describe('Verb Index', () => {
-    let verbIndexEntry;
+    let verbIndexEntry: IndexEntry;
 
     before(() => {
       verbIndexEntry = Wordnet.findVerb('import');
@@ -104,10 +104,10 @@ describe('Wordnet', () => {
   });
 
   describe('antonyms', () => {
-    const testSense = (sense) => {
+    const testSense = (sense: Sense) => {
       const antonym = sense.antonym;
 
-      if (antonym.length > 0) {
+      if (antonym && antonym.length > 0) {
         expect(antonym).to.be.an.instanceof(Array);
         expect(antonym[0]).to.be.an.instanceof(Sense);
         expect(antonym[0].word).to.be.a('string');

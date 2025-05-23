@@ -1,6 +1,6 @@
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import * as log4js from '@log4js-node/log4js-api';
-import path from 'path';
 
 /**
  * @see https://wordnet.princeton.edu/documentation/wninput5wn
