@@ -11,7 +11,9 @@
     const adj = Wordnet.findAdjective('good');
     const adv = Wordnet.findAdverb('loudly');
 
-See [eg/eg.js](eg/eg.js).
+See [eg/eg.js](eg/eg.mjs): 
+
+    node ./eg/eg.mjs
 
 ## INSTALL
 
