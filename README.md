@@ -4,12 +4,14 @@
 
     import { Wordnet } from 'wordnet-binary-search';
 
-    Wordnet.dataDir = '../downloads/WordNet-3.0/dict';
+    Wordnet.dataDir = './downloads/dict';
 
     const verb = Wordnet.findVerb('import');
     const noun = Wordnet.findNoun('name');
     const adj = Wordnet.findAdjective('good');
     const adv = Wordnet.findAdverb('loudly');
+
+See [eg/eg.js](eg/eg.js).
 
 ## INSTALL
 
@@ -20,18 +22,17 @@
 
 ## DESCRIPTION
 
-- binary searches upon your [downloaded](https://wordnet.princeton.edu/download/current-version) copies of Wordnet 3.1 "database files"
-- basic object modelling of Wordnet in Typescript
-- automatic, lazy-loaded dereferencing of word senses and semantic pointers
+- Performs fast binary searches upon [downloaded](https://wordnet.princeton.edu/download/current-version) copies of Wordnet 3.1 "database files"
+- Automatic, lazy-loaded dereferencing of word senses and semantic pointers
+- Basic object modelling of Wordnet in Typescript
 
 ## TODO
 
 Lots, probably - it currently does what I want.
 
-The typescript modelling is rather limited at present.
+The Typescript modelling is rather limited at present.
 
-The specs do not say if there can be more than one pointer of each type,
-so currently multiple are supported. This may change.
+The WordNet specs do not say if there can be more than one pointer of each type, so currently multiple are supported. This may change.
 
 ### POINTER REFERENCE
 
